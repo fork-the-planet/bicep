@@ -26,11 +26,11 @@
     "styled-components": "^6.1.11"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^8.4.2",
+    "@storybook/addon-essentials": "^8.4.5",
     "@storybook/addon-interactions": "^8.3.5",
     "@storybook/addon-links": "^8.4.2",
     "@storybook/addon-themes": "^8.3.5",
-    "@storybook/blocks": "^8.3.6",
+    "@storybook/blocks": "^8.4.5",
     "@storybook/react": "^8.3.5",
     "@storybook/react-vite": "^8.3.5",
     "@storybook/test": "^8.2.2",
@@ -47,7 +47,7 @@
     "storybook": "^8.3.0",
     "styled-components": "^6.1.13",
     "vite": "^5.4.8",
-    "vite-plugin-dts": "^4.2.3",
+    "vite-plugin-dts": "^4.3.0",
     "vite-plugin-lib-inject-css": "^2.1.1",
     "vite-plugin-svgr": "^4.2.0",
     "vitest": "^2.1.3"
