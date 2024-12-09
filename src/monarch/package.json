@@ -8,7 +8,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.1",
     "@typescript-eslint/eslint-plugin": "^8.16.0",
-    "@typescript-eslint/parser": "^8.16.0",
+    "@typescript-eslint/parser": "^8.17.0",
     "eslint": "^9.15.0",
     "eslint-plugin-jest": "^28.9.0",
     "eslint-plugin-notice": "^1.0.0",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
-    "@babel/plugin-transform-modules-commonjs": "^7.25.9",
+    "@babel/plugin-transform-modules-commonjs": "^7.26.3",
     "babel-jest": "^29.6.4"
   }
 }
