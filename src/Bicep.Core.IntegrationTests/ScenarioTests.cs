@@ -6631,4 +6631,73 @@ var subnetId = vNet::subnets[0].id
             ("BCP159", DiagnosticLevel.Error, "The resource \"vNet\" does not contain a nested resource named \"subnets\"."),
         ]);
     }
+
+    [TestMethod]
+    public void Test_Issue14838()
+    {
+        var result = CompilationHelper.Compile("""
+            var data = [
+              {
+                name: 'foo'
+                parallelism: 2
+              }
+              {
+                name: 'bar'
+                parallelism: 0
+              }
+              {
+                name: 'baz'
+                parallelism: 0
+              }
+            ]
+
+            var size = 4
+            var parallelisms = map(data, org => org.parallelism)
+            var allocated = reduce(parallelisms, 0, (sum, parallelism) => sum + parallelism)
+            var count = reduce(parallelisms, 0, (sum, parallelism) => parallelism == 0 ? sum + 1 : sum)
+
+            output remaining int = (size - allocated) / count
+            output extra int = (size - allocated) % count
+            """);
+
+        result.ExcludingLinterDiagnostics().Should().NotHaveAnyDiagnostics();
+    }
+
+    // https://www.github.com/Azure/bicep/issues/14067
+    [TestMethod]
+    public void Fail_function_should_be_usable_anywhere_the_expression_will_be_evaluated_at_runtime()
+    {
+        var result = CompilationHelper.Compile("""
+            var foo = fail('foo')
+            param required string = fail('should have supplied one')
+
+            resource sa 'Microsoft.Storage/storageAccounts@2023-05-01' existing = if (fail('should be allowed here')) {
+              name: fail('should be allowed here, too')
+            }
+
+            output boolOutput bool = required == 'bar' && fail('this, too, should be fine')
+            output stringOutput string = required == 'bar' ? 'boo' : fail('ternary should have assigned type of \'boo\'')
+            """);
+
+        result.ExcludingLinterDiagnostics().Should().NotHaveAnyDiagnostics();
+    }
+
+    // https://www.github.com/Azure/bicep/issues/14067
+    [TestMethod]
+    public void Fail_function_should_not_be_usable_anywhere_the_expression_will_be_evaluated_at_compile_time()
+    {
+        var result = CompilationHelper.Compile("""
+            resource sa 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+              name: 'acct'
+              dependsOn: [
+                fail('should not be allowed here')
+              ]
+            }
+            """);
+
+        result.ExcludingLinterDiagnostics().Should().HaveDiagnostics(new[]
+        {
+            ("BCP034", DiagnosticLevel.Error, "The enclosing array expected an item of type \"module[] | (resource | module) | resource[]\", but the provided item was of type \"never\"."),
+        });
+    }
 }
