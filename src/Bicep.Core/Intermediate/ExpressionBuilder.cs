@@ -456,7 +456,7 @@ public class ExpressionBuilder
         var implicitExtension = Context.SemanticModel.Binder.NamespaceResolver.ImplicitNamespaces
             .Select(x => x.Value.TryGetNamespaceType())
             .WhereNotNull()
-            .Where(x => 
+            .Where(x =>
                 // The 'az' and 'sys' namespaces do not utilize the extensibility contract and do not need to be emitted in the template
                 !LanguageConstants.IdentifierComparer.Equals(x.Settings.BicepExtensionName, SystemNamespaceType.BuiltInName) &&
                 !LanguageConstants.IdentifierComparer.Equals(x.Settings.BicepExtensionName, AzNamespaceType.BuiltInName))
@@ -1559,6 +1559,18 @@ public class ExpressionBuilder
         EmitResourceOrModuleScopeProperties(resource.ScopeData, expressionEmitter, resource.BodySyntax);
     }
 
+    /*public void EmitResourceOptionsProperties(ExpressionEmitter expressionEmitter, DeclaredResourceExpression resource)
+    {
+        if (resource.SourceSyntax is FunctionCallSyntax functionCallSyntax)
+        {
+            // emit the resource id of the resource being extended
+            var indexContext = TryGetReplacementContext(scopeResource, resource.ScopeData.IndexExpression, resource.BodySyntax);
+            expressionEmitter.EmitProperty("parent", () => expressionEmitter.EmitUnqualifiedResourceId(scopeResource, indexContext));
+            return;
+        }
+        EmitResourceOrModuleScopeProperties(resource.ScopeData, expressionEmitter, resource.BodySyntax);
+    }
+*/
     public void EmitModuleScopeProperties(ExpressionEmitter expressionEmitter, DeclaredModuleExpression module)
     {
         EmitResourceOrModuleScopeProperties(module.ScopeData, expressionEmitter, module.BodySyntax);
