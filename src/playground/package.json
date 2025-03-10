@@ -13,13 +13,13 @@
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.18.0",
-    "@types/node": "^22.13.4",
+    "@types/node": "^22.13.10",
     "@types/pako": "^2.0.3",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.21.0",
-    "eslint-config-prettier": "^10.0.1",
+    "eslint": "^9.22.0",
+    "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-jest": "^28.11.0",
     "eslint-plugin-notice": "^1.0.0",
     "eslint-plugin-prettier": "^5.2.3",
@@ -32,7 +32,7 @@
     "vite-plugin-static-copy": "^2.3.0"
   },
   "dependencies": {
-    "@microsoft/applicationinsights-web": "^3.3.5",
+    "@microsoft/applicationinsights-web": "^3.3.6",
     "bootstrap": "^5.3.3",
     "monaco-editor": "^0.52.2",
     "pako": "^2.1.0",
