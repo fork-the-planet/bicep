@@ -14,7 +14,7 @@ using Bicep.Core.Syntax;
 using Bicep.Core.TypeSystem;
 using Bicep.Core.TypeSystem.Providers.Az;
 using Bicep.Core.TypeSystem.Types;
-using Bicep.Core.Workspaces;
+using Bicep.Core.SourceGraph;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using static Bicep.Core.Emit.ScopeHelper;
 
@@ -1621,6 +1621,10 @@ public class ExpressionBuilder
                     var indexContext = TryGetReplacementContext(scopeData.ResourceGroupProperty, scopeData.IndexExpression, newContext);
                     expressionEmitter.EmitProperty("resourceGroup", () => expressionEmitter.EmitExpression(scopeData.ResourceGroupProperty, indexContext));
                 }
+                return;
+            case ResourceScope.DesiredStateConfiguration:
+                // This scope just changes the schema so there are no properties to emit.
+                // We don't ever need to throw here because the feature is checked during scope validation.
                 return;
             default:
                 throw new InvalidOperationException($"Cannot format resourceId for scope {scopeData.RequestedScope}");

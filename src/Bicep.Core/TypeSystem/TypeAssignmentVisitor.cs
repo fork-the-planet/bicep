@@ -11,7 +11,6 @@ using Bicep.Core.Extensions;
 using Bicep.Core.Features;
 using Bicep.Core.Intermediate;
 using Bicep.Core.Navigation;
-using Bicep.Core.Parsing;
 using Bicep.Core.Semantics;
 using Bicep.Core.Semantics.Metadata;
 using Bicep.Core.Semantics.Namespaces;
@@ -19,7 +18,8 @@ using Bicep.Core.Syntax;
 using Bicep.Core.Syntax.Visitors;
 using Bicep.Core.TypeSystem.Providers;
 using Bicep.Core.TypeSystem.Types;
-using Bicep.Core.Workspaces;
+using Bicep.Core.SourceGraph;
+using Bicep.Core.Text;
 
 namespace Bicep.Core.TypeSystem
 {
@@ -2112,6 +2112,13 @@ namespace Bicep.Core.TypeSystem
                 if (declaredType is ErrorType)
                 {
                     return declaredType;
+                }
+
+                // We add the DSC constant here so we can error with BCP033 when the feature isn't enabled.
+                // TODO: When no longer experimental, add directly to 'TargetScopeSyntax.GetDeclaredType()' instead.
+                if (features.DesiredStateConfigurationEnabled)
+                {
+                    declaredType = TypeHelper.CreateTypeUnion(declaredType, TypeFactory.CreateStringLiteralType(LanguageConstants.TargetScopeTypeDesiredStateConfiguration));
                 }
 
                 TypeValidator.GetCompileTimeConstantViolation(syntax.Value, diagnostics);

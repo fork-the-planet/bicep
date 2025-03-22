@@ -7,18 +7,19 @@ using Bicep.Core.Extensions;
 using Bicep.Core.Features;
 using Bicep.Core.Registry;
 using Bicep.Core.Registry.Oci;
-using Bicep.Core.SourceCode;
+using Bicep.Core.SourceLink;
 using Bicep.Core.Syntax;
 using Bicep.Core.UnitTests.Assertions;
 using Bicep.Core.UnitTests.FileSystem;
 using Bicep.Core.UnitTests.Mock;
 using Bicep.Core.UnitTests.Utils;
-using Bicep.Core.Workspaces;
+using Bicep.Core.SourceGraph;
 using Bicep.IO.Abstraction;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using static Bicep.Core.Diagnostics.DiagnosticBuilder;
+using Bicep.Core.Text;
 
 namespace Bicep.Core.UnitTests.Registry
 {
@@ -717,7 +718,7 @@ namespace Bicep.Core.UnitTests.Registry
             var (_, failureBuilder) = (await ociRegistry.RestoreArtifacts(new[] { reference })).SingleOrDefault();
             if (failureBuilder is { })
             {
-                var builder = new DiagnosticBuilderInternal(new Core.Parsing.TextSpan());
+                var builder = new DiagnosticBuilderInternal(new TextSpan());
                 var diagnostic = failureBuilder(builder);
                 if (diagnostic is { })
                 {
