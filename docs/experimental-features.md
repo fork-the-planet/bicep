@@ -21,9 +21,8 @@ Allows you to author configuration documents for [Microsoft's Desired State Conf
 
 Enables the ability to extend bicepparam files from other bicepparam files. For more information, see [Extendable Bicep Params Files](./experimental/extendable-param-files.md).
 
-### `extensibility`
-
-Allows Bicep to use an extensibility model to deploy non-ARM resources. Currently, we support Kubernetes extension ([Bicep Kubernetes extension](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/bicep-kubernetes-extension)) and Microsoft Graph extension ([Bicep templates for Microsoft Graph](https://aka.ms/graphbicep)).
+### `externalInputFunction`
+Enables the `externalInput` function to allow reading input that will be resolved later by external tooling. This is useful for tools that require the ability to inject values at deployment time. Note: This feature will not work until the backend service support has been deployed.
 
 ### `legacyFormatter`
 
@@ -38,6 +37,19 @@ Enables Bicep to run deployments locally, so that you can run Bicep extensions w
 Moves defining extension configurations to the module level rather than from within a template. The feature also
 includes enhancements for Deployment stacks extensibility integration. This feature is not ready for use.
 
+### `onlyIfNotExists`
+The feature introduces the onlyIfNotExists decorator on a resource. The decorator will only deploy the resource if it does not exist. (Note: This feature will not work until the backend service support has been deployed)
+```
+@onlyIfNotExists()
+resource onlyDeployIfNotExists 'Microsoft...' = {
+  name: 'example'
+  location: 'eastus'
+  properties: {
+    ...
+  }
+}
+```
+
 ### `resourceDerivedTypes`
 
 If enabled, templates can reuse resource types wherever a type is expected. For example, to declare a parameter `foo` that should be usable as the name of an Azure Storage account, the following syntax would be used: `param foo resourceInput<'Microsoft.Storage/storageAccounts@2022-09-01'>.name`. **NB:** Because resource types may be inaccurate in some cases, no constraints other than the ARM type primitive will be enforced on resource derived types within the ARM deployment engine. Resource-derived types will be checked by Bicep at compile time, but violations will be emitted as warnings rather than errors.
@@ -49,10 +61,6 @@ Enables the 'resourceInfo' function for simplified code generation.
 ### `resourceTypedParamsAndOutputs`
 
 Enables the type for a parameter or output to be of type resource to make it easier to pass resource references between modules. This feature is only partially implemented. See [Simplifying resource referencing](https://github.com/azure/bicep/issues/2245).
-
-### `secureOutputs`
-
-Permits the usage of the `@secure()` decorator for module outputs. This feature must have also been enabled in your Azure subscription or tenant, or the deployment will fail. See [Add securestring support for template output type](https://github.com/Azure/bicep/issues/2163).
 
 ### `sourceMapping`
 
@@ -66,10 +74,6 @@ Allows the ARM template layer to use a new schema to represent resources as an o
 
 Should be enabled in tandem with `assertions` experimental feature flag for expected functionality. Allows you to author client-side, offline unit-test test blocks that reference Bicep files and mock deployment parameters in a separate `test.bicep` file using the new `test` keyword. Test blocks can be run with the command *bicep test <filepath_to_file_with_test_blocks>* which runs all `assert` statements in the Bicep files referenced by the test blocks. For more information, see [Bicep Experimental Test Framework](https://github.com/Azure/bicep/issues/11967).
 
-### `typedVariables`
-
-Permits optional usage of types on variable declarations.
-
 ### `waitAndRetry`
 
 The feature introduces waitUntil and retryOn decorators on resource data type. waitUnitl() decorator waits for the resource until its usable based on the desired property's state. retryOn() will retry the deployment if one if the listed exception codes are encountered.
@@ -79,3 +83,7 @@ The feature introduces waitUntil and retryOn decorators on resource data type. w
 ### `publish-extension` CLI Command
 
 Command that allows the publishing of extensions to container registries. For more information, see [Using the Publish Extension Command](./experimental/publish-extension-command.md).
+
+### `snapshot` CLI Command
+
+Generate a normalized list of resources to file, which can then be used to generate a visual diff for changes. For more information, see [Using the Snapshot Command](./experimental/snapshot-command.md).

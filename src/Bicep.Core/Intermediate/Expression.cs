@@ -401,14 +401,15 @@ public record ExtensionExpression(
     protected override object? GetDebugAttributes() => new { Name };
 }
 
-public record ExtensionConfigAssignmentReferenceExpression(
+public record ExtensionReferenceExpression(
     SyntaxBase? SourceSyntax,
-    ExtensionConfigAssignmentSymbol ExtensionConfigAssignment) : Expression(SourceSyntax)
+    ExtensionNamespaceSymbol ExtensionNamespace)
+    : Expression(SourceSyntax)
 {
     public override void Accept(IExpressionVisitor visitor)
-        => visitor.VisitExtensionConfigAssignmentReferenceExpression(this);
+        => visitor.VisitExtensionReferenceExpression(this);
 
-    protected override object? GetDebugAttributes() => new { ExtensionAlias = ExtensionConfigAssignment.Name };
+    protected override object? GetDebugAttributes() => new { ExtensionAlias = ExtensionNamespace.Name };
 }
 
 public abstract record TypeDeclaringExpression(
@@ -502,9 +503,8 @@ public record DeclaredResourceExpression(
     SyntaxBase BodySyntax,
     Expression Body,
     ImmutableArray<ResourceDependencyExpression> DependsOn,
-    Expression? Description = null,
-    ArrayExpression? RetryOn = null,
-    ArrayExpression? WaitUntil = null
+    ImmutableDictionary<string, ArrayExpression> DecoratorConfig,
+    Expression? Description = null
 ) : DescribableExpression(SourceSyntax, Description)
 {
     public override void Accept(IExpressionVisitor visitor)

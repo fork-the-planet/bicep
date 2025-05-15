@@ -92,7 +92,7 @@ namespace Bicep.Core.Semantics
             LinterAnalyzer = linterAnalyzer;
 
             this.allResourcesLazy = new(GetAllResourceMetadata);
-            this.declaredResourcesLazy = new(() => this.AllResources.OfType<DeclaredResourceMetadata>().ToImmutableArray());
+            this.declaredResourcesLazy = new(() => [.. this.AllResources.OfType<DeclaredResourceMetadata>()]);
 
             this.assignmentsByDeclaration = new(InitializeDeclarationToAssignmentDictionary);
             this.declarationsByAssignment = new(InitializeAssignmentToDeclarationDictionary);
@@ -142,11 +142,11 @@ namespace Bicep.Core.Semantics
                         // Resource type parameters are a special case, we need to convert to a dedicated
                         // type so we can compare differently for assignment and code generation.
                         var type = new UnresolvedResourceType(resourceType.TypeReference);
-                        outputs.Add(new OutputMetadata(output.Name, type, description));
+                        outputs.Add(new OutputMetadata(output.Name, type, description, output.DeclaringOutput.IsSecureOutput(this)));
                     }
                     else
                     {
-                        outputs.Add(new OutputMetadata(output.Name, output.Type, description));
+                        outputs.Add(new OutputMetadata(output.Name, output.Type, description, output.DeclaringOutput.IsSecureOutput(this)));
                     }
                 }
 
@@ -169,7 +169,7 @@ namespace Bicep.Core.Semantics
         private IEnumerable<ExportMetadata> FindExportedFunctions() => Root.FunctionDeclarations
             .Where(f => f.IsExported(this))
             .Select(f => new ExportedFunctionMetadata(f.Name,
-                f.Overload.FixedParameters.Select(p => new ExportedFunctionParameterMetadata(p.Name, p.Type, p.Description)).ToImmutableArray(),
+                [.. f.Overload.FixedParameters.Select(p => new ExportedFunctionParameterMetadata(p.Name, p.Type, p.Description))],
                 new(f.Overload.TypeSignatureSymbol, null),
                 DescriptionHelper.TryGetFromDecorator(this, f.DeclaringFunction)));
 
@@ -461,11 +461,6 @@ namespace Bicep.Core.Semantics
 
         private ImmutableSortedDictionary<string, ExtensionMetadata> FindExtensions()
         {
-            if (!SourceFile.Features.ExtensibilityEnabled)
-            {
-                return ImmutableSortedDictionary<string, ExtensionMetadata>.Empty;
-            }
-
             var extensions = ImmutableSortedDictionary.CreateBuilder<string, ExtensionMetadata>();
 
             foreach (var extDecl in this.Root.ExtensionDeclarations.DistinctBy(p => p.Name))

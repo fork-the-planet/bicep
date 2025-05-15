@@ -132,12 +132,10 @@ namespace Bicep.Core.TypeSystem
                     return new DeclaredTypeAssignment(TypeFactory.CreateBooleanType(), assert);
 
                 case TargetScopeSyntax targetScope:
-                    // We add the DSC constant here so we can have it as a completion when the feature is enabled.
-                    // TODO: When no longer experimental, add directly to 'TargetScopeSyntax.GetDeclaredType()' instead.
+                    var supportedScopes = TargetScopeSyntax.GetDeclaredType(features);
+
                     return new DeclaredTypeAssignment(
-                        features.DesiredStateConfigurationEnabled
-                            ? TypeHelper.CreateTypeUnion(targetScope.GetDeclaredType(), TypeFactory.CreateStringLiteralType(LanguageConstants.TargetScopeTypeDesiredStateConfiguration))
-                            : targetScope.GetDeclaredType(),
+                        supportedScopes,
                         targetScope, DeclaredTypeFlags.Constant);
 
                 case IfConditionSyntax ifCondition:
@@ -548,17 +546,12 @@ namespace Bicep.Core.TypeSystem
             // The resource type of an output can be inferred.
             var type = syntax.Type == null && GetOutputValueType(syntax) is { } inferredType ? inferredType : GetDeclaredResourceType(syntax);
 
-            if (type is ResourceType resourceType && IsExtensibilityType(resourceType))
+            if (type is ResourceType resourceType && !resourceType.IsAzResource())
             {
                 return ErrorType.Create(DiagnosticBuilder.ForPosition(syntax).UnsupportedResourceTypeParameterOrOutputType(resourceType.Name));
             }
 
             return type;
-        }
-
-        private static bool IsExtensibilityType(ResourceType resourceType)
-        {
-            return resourceType.DeclaringNamespace.ExtensionName != AzNamespaceType.BuiltInName;
         }
 
         private TypeSymbol? GetOutputValueType(SyntaxBase syntax) => binder.GetParent(syntax) switch
@@ -717,7 +710,7 @@ namespace Bicep.Core.TypeSystem
         }
 
         private bool HasSecureDecorator(DecorableSyntax syntax)
-            => SemanticModelHelper.TryGetDecoratorInNamespace(binder, typeManager.GetDeclaredType, syntax, SystemNamespaceType.BuiltInName, LanguageConstants.ParameterSecurePropertyName) is not null;
+            => syntax.HasSecureDecorator(binder, typeManager);
 
         private DecoratorSyntax? TryGetSystemDecorator(DecorableSyntax syntax, string decoratorName)
             => SemanticModelHelper.TryGetDecoratorInNamespace(binder, typeManager.GetDeclaredType, syntax, SystemNamespaceType.BuiltInName, decoratorName);
@@ -1005,7 +998,7 @@ namespace Bicep.Core.TypeSystem
                 return ErrorType.Create(DiagnosticBuilder.ForPosition(syntax).AccessExpressionForbiddenBase());
             }
 
-            return EnsureNonParameterizedType(propertyNameSyntax, GetTypePropertyType(baseExpressionType, propertyName, propertyNameSyntax));
+            return EnsureNonParameterizedType(propertyNameSyntax, typePropertyType);
         }
 
         private static TypeSymbol GetTypePropertyType(ITypeReference baseExpressionType, string propertyName, SyntaxBase propertyNameSyntax)
@@ -1589,7 +1582,7 @@ namespace Bicep.Core.TypeSystem
         {
             var parent = this.binder.GetParent(syntax);
             if (parent is not FunctionCallSyntaxBase parentFunction ||
-                SymbolHelper.TryGetSymbolInfo(this.binder, this.GetDeclaredType, parent) is not FunctionSymbol functionSymbol)
+                SymbolHelper.TryGetSymbolInfo(this.binder, this.GetDeclaredType, parent) is not IFunctionSymbol functionSymbol)
             {
                 return null;
             }
@@ -1807,13 +1800,25 @@ namespace Bicep.Core.TypeSystem
                         throw new InvalidOperationException("Expected ImportWithClauseSyntax to have a parent.");
                     }
 
-                    if (GetDeclaredTypeAssignment(parent) is not { } extensionAssignment ||
-                        extensionAssignment.Reference.Type is not NamespaceType namespaceType)
+                    ObjectType? configType = null;
+
+                    if (GetDeclaredTypeAssignment(parent) is not { } extensionAssignment)
                     {
                         return null;
                     }
 
-                    if (namespaceType.ConfigurationType is null)
+                    if (extensionAssignment.Reference.Type is NamespaceType namespaceType)
+                    {
+                        // This case is extension declarations in bicep files.
+                        configType = namespaceType.ConfigurationType;
+                    }
+                    else if (parent is ExtensionConfigAssignmentSyntax && extensionAssignment.Reference.Type is ObjectType configTypeFromAssignment)
+                    {
+                        // This case is extension config assignments in bicepparam files.
+                        configType = configTypeFromAssignment;
+                    }
+
+                    if (configType is null)
                     {
                         // this namespace doesn't support configuration, but it has been provided.
                         // we'll check for this during type assignment.
@@ -1822,7 +1827,7 @@ namespace Bicep.Core.TypeSystem
 
                     // the object is an item in an array
                     // use the item's type and propagate flags
-                    return TryCreateAssignment(ResolveDiscriminatedObjects(namespaceType.ConfigurationType.Type, syntax), syntax, extensionAssignment.Flags);
+                    return TryCreateAssignment(ResolveDiscriminatedObjects(configType.Type, syntax), syntax, extensionAssignment.Flags);
                 case FunctionArgumentSyntax:
                 case OutputDeclarationSyntax parentOutput when syntax == parentOutput.Value:
                 case VariableDeclarationSyntax parentVariable when syntax == parentVariable.Value:
@@ -2138,7 +2143,7 @@ namespace Bicep.Core.TypeSystem
 
             List<NamedTypeProperty>? extensionConfigs = null;
 
-            if (features is { ExtensibilityEnabled: true, ModuleExtensionConfigsEnabled: true })
+            if (features.ModuleExtensionConfigsEnabled)
             {
                 extensionConfigs = [];
 

@@ -11,10 +11,10 @@ using Azure.Deployments.Core.Entities;
 using Azure.Deployments.Core.EventSources;
 using Azure.Deployments.Core.Exceptions;
 using Azure.Deployments.Core.FeatureEnablement;
-using Azure.Deployments.Engine.Host.Azure.Interfaces;
-using Azure.Deployments.Engine.Host.Azure.Workers.Metadata;
-using Azure.Deployments.Engine.Host.External;
+using Azure.Deployments.Core.Telemetry;
+using Azure.Deployments.Engine.External;
 using Azure.Deployments.Engine.Interfaces;
+using Azure.Deployments.Engine.Workers.Metadata;
 using Azure.Deployments.ResourceMetadata.Contracts;
 using Bicep.Local.Deploy.Extensibility;
 using Microsoft.WindowsAzure.ResourceStack.Common.BackgroundJobs;
@@ -28,22 +28,24 @@ namespace Bicep.Local.Deploy;
 
 public class LocalDeploymentEngineHost : DeploymentEngineHostBase
 {
-    private readonly LocalExtensibilityHostManager extensibilityHandler;
+    private readonly LocalExtensionHostManager extensionHostManager;
 
     public readonly record struct ExtensionInfo(string ExtensionName, string ExtensionVersion, string Method);
 
     public LocalDeploymentEngineHost(
-        LocalExtensibilityHostManager extensibilityHandler,
+        LocalExtensionHostManager extensionHostManager,
         IDeploymentsRequestContext requestContext,
         IDeploymentEventSource deploymentEventSource,
         IKeyVaultDataProvider keyVaultDataProvider,
         IAzureDeploymentSettings settings,
         IDataProviderHolder dataProviderHolder,
         ITemplateExceptionHandler exceptionHandler,
-        IEnablementConfigProvider enablementConfigProvider)
-        : base(settings, deploymentEventSource, keyVaultDataProvider, requestContext, dataProviderHolder, exceptionHandler, enablementConfigProvider)
+        IEnablementConfigProvider enablementConfigProvider,
+        IHttpContentHandler contentHandler,
+        IDeploymentMetricsReporter metricsReporter)
+        : base(settings, contentHandler, deploymentEventSource, metricsReporter, keyVaultDataProvider, requestContext, dataProviderHolder, exceptionHandler, enablementConfigProvider)
     {
-        this.extensibilityHandler = extensibilityHandler;
+        this.extensionHostManager = extensionHostManager;
     }
 
     public override Task<HttpResponseMessage> DownloadContent(Uri requestUri, CancellationToken cancellationToken)
@@ -61,14 +63,6 @@ public class LocalDeploymentEngineHost : DeploymentEngineHostBase
     public override Task<IReadOnlyList<ResourceId>> GetTrackedResourceIds(
         ResourceGroupInfo resourceGroup,
         Func<ResourceGroupLevelResourceId, bool> resourceIdFilterFunc,
-        CancellationToken cancellationToken,
-        string oboToken,
-        string oboCorrelationId,
-        string auxToken)
-        => throw new NotImplementedException();
-
-    public override Task<ResourceTypeRegistrationInfo[]> FindRegistrationsForSubscription(
-        string subscriptionId,
         CancellationToken cancellationToken,
         string oboToken,
         string oboCorrelationId,
@@ -98,42 +92,12 @@ public class LocalDeploymentEngineHost : DeploymentEngineHostBase
         return stringToBeSanitized;
     }
 
-    protected override async Task<T> ReadAsJson<T>(HttpContent content, bool rewindContentStream = false)
-    {
-        using var contentStream = await content.ReadAsStreamAsync();
-
-        return contentStream.FromJsonStream<T>();
-    }
-
-    protected override async Task<T> TryReadAsJson<T>(HttpContent content, bool rewindContentStream = false)
-    {
-        try
-        {
-            return await ReadAsJson<T>(content, rewindContentStream);
-        }
-        catch
-        {
-            return default;
-        }
-    }
-
-    protected override async Task<string> TryReadAsString(HttpContent content, bool rewindContentStream = false)
-    {
-        try
-        {
-            return await content.ReadAsStringAsync();
-        }
-        catch
-        {
-            return default;
-        }
-    }
-
     public override async Task<HttpResponseMessage> CallExtensibilityHostV2(
         HttpMethod requestMethod,
         Uri requestUri,
         HttpContent content,
         AuthenticationToken extensibilityHostToken,
+        string msiIdentityUrl,
         CancellationToken cancellationToken)
     {
         var extensionName = requestUri.Segments[^4].TrimEnd('/');
@@ -142,14 +106,11 @@ public class LocalDeploymentEngineHost : DeploymentEngineHostBase
 
         var extensionInfo = new ExtensionInfo(extensionName, extensionVersion, method);
 
-        return await extensibilityHandler.CallExtensibilityHost(extensionInfo, content, cancellationToken);
+        return await extensionHostManager.CallExtensibilityHost(extensionInfo, content, cancellationToken);
     }
 
     protected override Task<JToken> GetEnvironmentKey()
         => Task.FromResult<JToken>(new JObject());
-
-    public override Task ValidateDeploymentLocationAcceptable(IDeploymentRequestContext deploymentContext, string deploymentLocation, string oboToken, string oboCorrelationId, string auxToken)
-        => Task.CompletedTask;
 
     public override void AddAsyncNotificationUri(HttpRequestHeaders httpHeaders, BackgroundJob backgroundJob, DeploymentResourceJobMetadata deploymentJobMetadata, JobLogger jobLogger)
         => throw new NotImplementedException();

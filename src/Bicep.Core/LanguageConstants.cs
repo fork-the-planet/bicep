@@ -92,6 +92,7 @@ namespace Bicep.Core
         public const string TargetScopeTypeSubscription = "subscription";
         public const string TargetScopeTypeResourceGroup = "resourceGroup";
         public const string TargetScopeTypeDesiredStateConfiguration = "desiredStateConfiguration";
+        public const string TargetScopeTypeLocal = "local";
 
         public const string CopyLoopIdentifier = "copy";
 
@@ -164,6 +165,7 @@ namespace Bicep.Core
         public const string RetryOnPropertyName = "retryOn";
         public const string ExportPropertyName = "export";
         public const string TypeDiscriminatorDecoratorName = "discriminator";
+        public const string OnlyIfNotExistsPropertyName = "onlyIfNotExists";
 
         // module properties
         public const string ModuleParamsPropertyName = "params";
@@ -198,6 +200,9 @@ namespace Bicep.Core
             TypeNameResourceOutput,
         }.ToFrozenSet(IdentifierComparer);
 
+        // extension namespace properties
+        public const string ExtensionConfigPropertyName = "config";
+
         public static readonly StringComparer IdentifierComparer = StringComparer.Ordinal;
         public static readonly StringComparison IdentifierComparison = StringComparison.Ordinal;
 
@@ -210,6 +215,8 @@ namespace Bicep.Core
 
         public const string AnyFunction = "any";
         public const string NameofFunctionName = "nameof";
+        public const string ExternalInputBicepFunctionName = "externalInput";
+        public const string ExternalInputsArmFunctionName = "externalInputs";
 
         public static readonly TypeSymbol Any = new AnyType();
         public static readonly TypeSymbol Never = new UnionType("never", []);
@@ -314,6 +321,10 @@ namespace Bicep.Core
             {
                 yield return "desiredStateConfiguration";
             }
+            if (resourceScope.HasFlag(ResourceScope.Local))
+            {
+                yield return "local";
+            }
         }
 
         public static ResourceScopeType CreateResourceScopeReference(ResourceScope resourceScope)
@@ -352,7 +363,7 @@ namespace Bicep.Core
                 new(ResourceDependsOnPropertyName, ResourceOrResourceCollectionRefArray, TypePropertyFlags.WriteOnly | TypePropertyFlags.DisallowAny)
             ];
 
-            if (features is { ExtensibilityEnabled: true, ModuleExtensionConfigsEnabled: true })
+            if (features.ModuleExtensionConfigsEnabled)
             {
                 extensionConfigsProperties ??= [];
                 var extensionConfigsType = new ObjectType(ModuleExtensionConfigsPropertyName, TypeSymbolValidationFlags.Default, extensionConfigsProperties);

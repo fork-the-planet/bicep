@@ -22,8 +22,6 @@ namespace Bicep.Core.Features
 
         public bool SymbolicNameCodegenEnabled => this.configuration.ExperimentalFeaturesEnabled.SymbolicNameCodegen;
 
-        public bool ExtensibilityEnabled => this.configuration.ExperimentalFeaturesEnabled.Extensibility;
-
         public bool ExtendableParamFilesEnabled => this.configuration.ExperimentalFeaturesEnabled.ExtendableParamFiles;
 
         public bool ResourceTypedParamsAndOutputsEnabled => this.configuration.ExperimentalFeaturesEnabled.ResourceTypedParamsAndOutputs;
@@ -44,19 +42,17 @@ namespace Bicep.Core.Features
 
         public bool WaitAndRetryEnabled => configuration.ExperimentalFeaturesEnabled.WaitAndRetry;
 
+        public bool OnlyIfNotExistsEnabled => configuration.ExperimentalFeaturesEnabled.OnlyIfNotExists;
+
         public bool LocalDeployEnabled => configuration.ExperimentalFeaturesEnabled.LocalDeploy;
 
-        public bool SecureOutputsEnabled => configuration.ExperimentalFeaturesEnabled.SecureOutputs;
-
         public bool ResourceInfoCodegenEnabled => this.configuration.ExperimentalFeaturesEnabled.ResourceInfoCodegen;
-
-        public bool TypedVariablesEnabled => configuration.ExperimentalFeaturesEnabled.TypedVariables;
-
-        public bool ExtensibilityV2EmittingEnabled => ModuleExtensionConfigsEnabled || ReadBooleanEnvVar("BICEP_EXTENSIBILITY_V2_EMITTING_ENABLED", defaultValue: false);
 
         public bool ModuleExtensionConfigsEnabled => configuration.ExperimentalFeaturesEnabled.ModuleExtensionConfigs;
 
         public bool DesiredStateConfigurationEnabled => configuration.ExperimentalFeaturesEnabled.DesiredStateConfiguration;
+
+        public bool ExternalInputFunctionEnabled => configuration.ExperimentalFeaturesEnabled.ExternalInputFunction;
 
         private static bool ReadBooleanEnvVar(string envVar, bool defaultValue)
             => bool.TryParse(Environment.GetEnvironmentVariable(envVar), out var value) ? value : defaultValue;

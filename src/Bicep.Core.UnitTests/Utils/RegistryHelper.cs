@@ -22,6 +22,7 @@ using Bicep.Core.UnitTests.Features;
 using Bicep.Core.UnitTests.Registry;
 using Bicep.IO.FileSystem;
 using FluentAssertions;
+using Google.Protobuf;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using static Bicep.Core.UnitTests.Registry.FakeContainerRegistryClient;
@@ -148,8 +149,7 @@ public static class RegistryHelper
             throw new InvalidOperationException($"Module {module.ModuleName} failed to produce a template.");
         }
 
-        var features = featureProviderFactory.GetFeatureProvider(result.BicepFile.Uri);
-        BinaryData? sourcesStream = module.WithSource ? BinaryData.FromStream(SourceArchive.PackSourcesIntoStream(dispatcher, result.Compilation.SourceFileGrouping, features.CacheRootDirectory)) : null;
+        BinaryData? sourcesStream = module.WithSource ? SourceArchive.CreateFor(result.Compilation.SourceFileGrouping).PackIntoBinaryData() : null;
         await dispatcher.PublishModule(targetReference, BinaryData.FromString(result.Template.ToString()), sourcesStream, module.DocumentationUri);
     }
 
@@ -202,6 +202,9 @@ public static class RegistryHelper
     }
 
     public static async Task PublishExtensionToRegistryAsync(IDependencyHelper services, string target, BinaryData tgzData, Uri? bicepFileUri = null)
+        => await PublishExtensionToRegistryAsync(services, target, new ExtensionPackage(tgzData, false, []), bicepFileUri);
+
+    public static async Task PublishExtensionToRegistryAsync(IDependencyHelper services, string target, ExtensionPackage package, Uri? bicepFileUri = null)
     {
         var dispatcher = services.Construct<IModuleDispatcher>();
 
@@ -220,7 +223,7 @@ public static class RegistryHelper
             throw new InvalidOperationException($"Failed to get reference '{errorBuilder(DiagnosticBuilder.ForDocumentStart()).Message}'.");
         }
 
-        await dispatcher.PublishExtension(targetReference, new(tgzData, false, []));
+        await dispatcher.PublishExtension(targetReference, package);
     }
 
     private static List<RepoTagDescriptor> ToTagDescriptors(IEnumerable<string> tags)

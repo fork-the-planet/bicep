@@ -11,6 +11,7 @@ using Bicep.Core.Intermediate;
 using Bicep.Core.Semantics;
 using Bicep.Core.Semantics.Metadata;
 using Bicep.Core.Semantics.Namespaces;
+using Bicep.Core.SourceGraph;
 using Bicep.Core.Syntax;
 using Bicep.Core.Syntax.Visitors;
 using Bicep.Core.Text;
@@ -931,7 +932,7 @@ namespace Bicep.Core.TypeSystem
             => AssignTypeWithDiagnostics(
                 syntax, diagnostics =>
                 {
-                    if (features is not { ExtensibilityEnabled: true, ModuleExtensionConfigsEnabled: true })
+                    if (!features.ModuleExtensionConfigsEnabled)
                     {
                         return ErrorType.Create(DiagnosticBuilder.ForPosition(syntax).UnrecognizedParamsFileDeclaration());
                     }
@@ -1068,11 +1069,6 @@ namespace Bicep.Core.TypeSystem
             {
                 if (syntax.Type is { })
                 {
-                    if (!model.Features.TypedVariablesEnabled)
-                    {
-                        return ErrorType.Create(DiagnosticBuilder.ForPosition(syntax.Type).TypedVariablesUnsupported());
-                    }
-
                     var declaredType = GetDeclaredTypeAndValidateDecorators(syntax, syntax.Type, diagnostics);
                     diagnostics.WriteMultiple(GetDeclarationAssignmentDiagnostics(declaredType, syntax.Value));
 
@@ -2016,7 +2012,7 @@ namespace Bicep.Core.TypeSystem
                 var argumentTypes = syntax.GetLocalVariables().Select(x => typeManager.GetTypeInfo(x));
                 var returnType = this.GetTypeInfo(syntax.Body);
 
-                return new LambdaType(argumentTypes.ToImmutableArray<ITypeReference>(), [], returnType);
+                return new LambdaType([.. argumentTypes], [], returnType);
             });
 
         public override void VisitTypedLambdaSyntax(TypedLambdaSyntax syntax)
@@ -2153,17 +2149,10 @@ namespace Bicep.Core.TypeSystem
                     diagnostics.Write(DiagnosticBuilder.ForPosition(syntax.Decorators.First().At).DecoratorsNotAllowed());
                 }
 
-                var declaredType = syntax.GetDeclaredType();
+                var declaredType = TargetScopeSyntax.GetDeclaredType(features);
                 if (declaredType is ErrorType)
                 {
                     return declaredType;
-                }
-
-                // We add the DSC constant here so we can error with BCP033 when the feature isn't enabled.
-                // TODO: When no longer experimental, add directly to 'TargetScopeSyntax.GetDeclaredType()' instead.
-                if (features.DesiredStateConfigurationEnabled)
-                {
-                    declaredType = TypeHelper.CreateTypeUnion(declaredType, TypeFactory.CreateStringLiteralType(LanguageConstants.TargetScopeTypeDesiredStateConfiguration));
                 }
 
                 TypeValidator.GetCompileTimeConstantViolation(syntax.Value, diagnostics);
@@ -2304,7 +2293,7 @@ namespace Bicep.Core.TypeSystem
             IDiagnosticWriter diagnosticWriter) => GetFunctionSymbolType(function,
                 syntax,
                 // Recover argument type errors so we can continue type checking for the parent function call.
-                GetRecoveredArgumentTypes(syntax.Arguments).ToImmutableArray(),
+                [.. GetRecoveredArgumentTypes(syntax.Arguments)],
                 diagnostics,
                 diagnosticWriter);
 
@@ -2335,7 +2324,7 @@ namespace Bicep.Core.TypeSystem
                             // a diagnostic. Only the last invocation will generate a return type.
                             var resultSansNullability = GetFunctionSymbolType(function,
                                 syntax,
-                                Enumerable.Range(0, argumentTypes.Length).Select(i => tm.ArgumentIndex == i ? nonNullableArgType : argumentTypes[i]).ToImmutableArray(),
+                                [.. Enumerable.Range(0, argumentTypes.Length).Select(i => tm.ArgumentIndex == i ? nonNullableArgType : argumentTypes[i])],
                                 diagnostics,
                                 diagnosticWriter);
 
@@ -2392,7 +2381,7 @@ namespace Bicep.Core.TypeSystem
                 for (var i = 0; i < syntax.Arguments.Length; i++)
                 {
                     var argumentSyntax = syntax.Arguments[i];
-                    var targetType = matchedOverload.GetArgumentType(i);
+                    var targetType = matchedOverload.GetArgumentType(i, getFunctionArgumentType: i => GetTypeInfo(syntax.Arguments[i]));
 
                     TypeValidator.NarrowTypeAndCollectDiagnostics(typeManager, binder, parsingErrorLookup, diagnosticWriter, argumentSyntax, targetType);
                 }

@@ -6,6 +6,7 @@ using Bicep.Core.Registry;
 using Bicep.Core.Registry.Oci;
 using Bicep.Core.SourceGraph;
 using Bicep.Core.SourceLink;
+using Bicep.Core.Utils;
 using Bicep.LanguageServer.Extensions;
 using Newtonsoft.Json.Linq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
@@ -48,7 +49,7 @@ namespace Bicep.LanguageServer.Handlers
                     var isDisplayingCompiledJson = externalReference.IsRequestingCompiledJson;
                     if (externalReference.ToArtifactReference(sourceFileFactory.CreateDummyArtifactReferencingFile()).IsSuccess(out var artifactReference, out message))
                     {
-                        var sourceArchiveResult = moduleDispatcher.TryGetModuleSources(artifactReference);
+                        var sourceArchiveResult = artifactReference.TryLoadSourceArchive();
 
                         if (isDisplayingCompiledJson)
                         {

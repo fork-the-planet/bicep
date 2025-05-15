@@ -8,35 +8,57 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
-using Azure.Deployments.Engine.Host.Azure.ExtensibilityV2.Contract.Models;
+using Azure.Deployments.Core.Definitions;
+using Azure.Deployments.Engine.ExtensibilityV2.Contract.Models;
+using Azure.Deployments.Engine.Instrumentation;
+using Azure.Deployments.Engine.Workers;
 using Azure.Deployments.Extensibility.Core.V2.Json;
 using Azure.Deployments.Extensibility.Core.V2.Models;
+using Bicep.Core.Configuration;
 using Bicep.Core.Extensions;
 using Bicep.Core.Registry;
+using Bicep.Core.Registry.Auth;
 using Bicep.Core.Semantics;
 using Bicep.Core.TypeSystem.Types;
+using Bicep.IO.Abstraction;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.WindowsAzure.ResourceStack.Common.Json;
 using IAsyncDisposable = System.IAsyncDisposable;
 
 
 namespace Bicep.Local.Deploy.Extensibility;
 
-public class LocalExtensibilityHostManager : IAsyncDisposable
+public class LocalExtensionHostManager : IAsyncDisposable
 {
     private record ExtensionKey(
         string Name,
         string Version);
 
-    private Dictionary<ExtensionKey, LocalExtensibilityHost> RegisteredExtensions = new();
+    private Dictionary<ExtensionKey, LocalExtensionHost> RegisteredExtensions = new();
     private readonly IModuleDispatcher moduleDispatcher;
-    private readonly Func<Uri, Task<LocalExtensibilityHost>> extensionFactory;
+    private readonly IFileExplorer fileExplorer;
+    private readonly Func<Uri, Task<LocalExtensionHost>> extensionFactory;
+    private readonly WorkerJobDispatcherClient jobDispatcher;
+    private readonly LocalDeploymentEngine localDeploymentEngine;
 
-    public LocalExtensibilityHostManager(IModuleDispatcher moduleDispatcher, Func<Uri, Task<LocalExtensibilityHost>> extensionFactory)
+    public LocalExtensionHostManager(
+        IFileExplorer fileExplorer,
+        IModuleDispatcher moduleDispatcher,
+        IConfigurationManager configurationManager,
+        ITokenCredentialFactory credentialFactory,
+        Func<Uri, Task<LocalExtensionHost>> extensionFactory)
     {
+        var services = new ServiceCollection()
+            .RegisterLocalDeployServices(this)
+            .BuildServiceProvider();
+
         this.moduleDispatcher = moduleDispatcher;
+        this.fileExplorer = fileExplorer;
         this.extensionFactory = extensionFactory;
+        this.localDeploymentEngine = services.GetRequiredService<LocalDeploymentEngine>();
+        this.jobDispatcher = services.GetRequiredService<WorkerJobDispatcherClient>();
         // Built in extension for handling nested deployments
-        RegisteredExtensions[new("LocalNested", "0.0.0")] = new NestedDeploymentBuiltInLocalExtension(this);
+        RegisteredExtensions[new("LocalNested", "0.0.0")] = new NestedDeploymentBuiltInLocalExtension(localDeploymentEngine, configurationManager, credentialFactory);
     }
 
     public async Task<HttpResponseMessage> CallExtensibilityHost(
@@ -57,7 +79,7 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
 
     private async Task<HttpResponseMessage> CallExtension(
         string method,
-        LocalExtensibilityHost extensibilityHost,
+        LocalExtensionHost extensionHost,
         HttpContent content,
         CancellationToken cancellationToken)
     {
@@ -66,28 +88,28 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
             case "createOrUpdate":
                 {
                     var resourceSpecification = await GetResourceSpecificationAsync(await content.ReadAsStreamAsync(cancellationToken), cancellationToken);
-                    var extensionResponse = await extensibilityHost.CreateOrUpdate(resourceSpecification, cancellationToken);
+                    var extensionResponse = await extensionHost.CreateOrUpdate(resourceSpecification, cancellationToken);
 
                     return await GetHttpResponseMessageAsync(extensionResponse, cancellationToken);
                 }
             case "delete":
                 {
                     var resourceReference = await GetResourceReferenceAsync(await content.ReadAsStreamAsync(cancellationToken), cancellationToken);
-                    var extensionResponse = await extensibilityHost.Delete(resourceReference, cancellationToken);
+                    var extensionResponse = await extensionHost.Delete(resourceReference, cancellationToken);
 
                     return await GetHttpResponseMessageAsync(extensionResponse, cancellationToken);
                 }
             case "get":
                 {
                     var resourceReference = await GetResourceReferenceAsync(await content.ReadAsStreamAsync(cancellationToken), cancellationToken);
-                    var extensionResponse = await extensibilityHost.Get(resourceReference, cancellationToken);
+                    var extensionResponse = await extensionHost.Get(resourceReference, cancellationToken);
 
                     return await GetHttpResponseMessageAsync(extensionResponse, cancellationToken);
                 }
             case "preview":
                 {
                     var resourceSpecification = await GetResourceSpecificationAsync(await content.ReadAsStreamAsync(cancellationToken), cancellationToken);
-                    var extensionResponse = await extensibilityHost.Preview(resourceSpecification, cancellationToken);
+                    var extensionResponse = await extensionHost.Preview(resourceSpecification, cancellationToken);
 
                     return await GetHttpResponseMessageAsync(extensionResponse, cancellationToken);
                 }
@@ -113,16 +135,16 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
     private async Task<TEntity> DeserializeAsync<TEntity>(Stream stream, JsonTypeInfo<TEntity> typeInfo, string errorMessage, CancellationToken cancellationToken)
         => await JsonSerializer.DeserializeAsync(stream, typeInfo, cancellationToken) ?? throw new ArgumentNullException(errorMessage);
 
-    private async Task<HttpResponseMessage> GetHttpResponseMessageAsync(LocalExtensibilityOperationResponse extensionResponse, CancellationToken cancellationToken)
+    private async Task<HttpResponseMessage> GetHttpResponseMessageAsync(LocalExtensionOperationResponse extensionResponse, CancellationToken cancellationToken)
     {
         if (extensionResponse.Resource is { } && extensionResponse.ErrorData is { })
         {
-            throw new ArgumentException($"Setting '{nameof(LocalExtensibilityOperationResponse.ErrorData)}' and '{nameof(LocalExtensibilityOperationResponse.Resource)}' is not valid. Please make sure to set one of these properties.");
+            throw new ArgumentException($"Setting '{nameof(LocalExtensionOperationResponse.ErrorData)}' and '{nameof(LocalExtensionOperationResponse.Resource)}' is not valid. Please make sure to set one of these properties.");
         }
 
         if (extensionResponse.Resource is not { } && extensionResponse.ErrorData is not { })
         {
-            throw new ArgumentException($"'{nameof(LocalExtensibilityOperationResponse.ErrorData)}' and '{nameof(LocalExtensibilityOperationResponse.Resource)}' cannot be both empty. Please make sure to set one of these properties.");
+            throw new ArgumentException($"'{nameof(LocalExtensionOperationResponse.ErrorData)}' and '{nameof(LocalExtensionOperationResponse.Resource)}' cannot be both empty. Please make sure to set one of these properties.");
         }
 
         var memoryStream = new MemoryStream();
@@ -151,7 +173,7 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
             };
         }
 
-        throw new UnreachableException($"Should not reach here, either '{nameof(LocalExtensibilityOperationResponse.ErrorData)}' or '{nameof(LocalExtensibilityOperationResponse.Resource)}' should have been set.");
+        throw new UnreachableException($"Should not reach here, either '{nameof(LocalExtensionOperationResponse.ErrorData)}' or '{nameof(LocalExtensionOperationResponse.Resource)}' should have been set.");
     }
 
     private IEnumerable<(NamespaceType namespaceType, Uri binaryUri)> GetBinaryExtensions(Compilation compilation)
@@ -164,7 +186,10 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
         foreach (var namespaceType in namespaceTypes)
         {
             if (namespaceType.Artifact is { } artifact &&
-                moduleDispatcher.TryGetExtensionBinary(artifact) is { } binaryUri)
+                moduleDispatcher.TryGetExtensionBinary(artifact) is { } binaryUri &&
+                // check for existence to filter down to providers that support local deployment
+                // the module restoration process will ensure this has been created successfully
+                fileExplorer.GetFile(binaryUri.ToIOUri()).Exists())
             {
                 yield return (namespaceType, binaryUri);
             }
@@ -182,6 +207,21 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
         }
     }
 
+    public async Task<LocalDeploymentResult> Deploy(string templateString, string parametersString, CancellationToken cancellationToken)
+    {
+        var name = Guid.NewGuid().ToString();
+        await localDeploymentEngine.StartDeployment(name, templateString, parametersString, cancellationToken);
+
+        var result = await localDeploymentEngine.CheckDeployment(name);
+        while (result.Deployment.Properties.ProvisioningState?.IsTerminal() != true)
+        {
+            await Task.Delay(20, cancellationToken);
+            result = await localDeploymentEngine.CheckDeployment(name);
+        }
+
+        return result;
+    }
+
     public async ValueTask DisposeAsync()
     {
         await Task.WhenAll(RegisteredExtensions.Values.Select(async extension =>
@@ -195,5 +235,6 @@ public class LocalExtensibilityHostManager : IAsyncDisposable
                 // TODO: handle errors shutting down processes gracefully
             }
         }));
+        jobDispatcher.Dispose();
     }
 }

@@ -1730,6 +1730,7 @@ param myParam string
                   properties: siteProperties
                 }
 
+                @secure()
                 output siteProperties resourceOutput<'Microsoft.Web/sites@2022-09-01'>.properties = appService.properties
                 """);
 
@@ -1871,5 +1872,21 @@ param myParam string
         {
             ("BCP033", DiagnosticLevel.Error, "Expected a value of type \"int | null\" but the provided value is of type \"null | string\"."),
         });
+    }
+
+    [TestMethod]
+    public void Narrowing_a_recursive_type_against_itself_does_not_recur_infinitely()
+    {
+        var result = CompilationHelper.Compile("""
+            type recursiveType = {
+              recursion: recursiveType?
+            }
+
+            param p recursiveType
+
+            output o recursiveType = p
+            """);
+
+        result.Should().NotHaveAnyDiagnostics();
     }
 }

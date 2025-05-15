@@ -256,9 +256,9 @@ public abstract class ExpressionRewriteVisitor : IExpressionVisitor
         return hasChanges ? expression with { Config = config, Description = description } : expression;
     }
 
-    void IExpressionVisitor.VisitExtensionConfigAssignmentReferenceExpression(ExtensionConfigAssignmentReferenceExpression expression) => ReplaceCurrent(expression, ReplaceExtensionConfigAssignmentReferenceExpression);
+    void IExpressionVisitor.VisitExtensionReferenceExpression(ExtensionReferenceExpression expression) => ReplaceCurrent(expression, ReplaceExtensionReferenceExpression);
 
-    public virtual Expression ReplaceExtensionConfigAssignmentReferenceExpression(ExtensionConfigAssignmentReferenceExpression expression)
+    public virtual Expression ReplaceExtensionReferenceExpression(ExtensionReferenceExpression expression)
     {
         return expression;
     }
@@ -390,9 +390,10 @@ public abstract class ExpressionRewriteVisitor : IExpressionVisitor
         var hasChanges =
             TryRewrite(expression.Body, out var body) |
             TryRewriteStrict(expression.DependsOn, out var dependsOn) |
-            TryRewriteDescription(expression, out var description);
+            TryRewriteDescription(expression, out var description) |
+            TryRewriteDictionaryStrict(expression.DecoratorConfig, out var decoratorConfig);
 
-        return hasChanges ? expression with { Body = body, DependsOn = dependsOn, Description = description } : expression;
+        return hasChanges ? expression with { Body = body, DependsOn = dependsOn, Description = description, DecoratorConfig = decoratorConfig } : expression;
     }
 
     void IExpressionVisitor.VisitDeclaredModuleExpression(DeclaredModuleExpression expression) => ReplaceCurrent(expression, ReplaceDeclaredModuleExpression);
@@ -796,6 +797,22 @@ public abstract class ExpressionRewriteVisitor : IExpressionVisitor
         newExpressions = hasChanges ? newExpressionList.ToImmutable() : expressions;
         return hasChanges;
     }
+
+    private bool TryRewriteDictionaryStrict<TExpression>(ImmutableDictionary<string, TExpression> dictionary, out ImmutableDictionary<string, TExpression> newDictionary)
+        where TExpression : ArrayExpression
+    {
+        var hasChanges = false;
+        var newDictionaryList = ImmutableDictionary.CreateBuilder<string, TExpression>(dictionary.KeyComparer, dictionary.ValueComparer);
+        foreach (var (key, expression) in dictionary)
+        {
+            hasChanges |= TryRewriteStrict(expression, out var newExpression);
+            newDictionaryList.Add(key, newExpression);
+        }
+
+        newDictionary = hasChanges ? newDictionaryList.ToImmutable() : dictionary;
+        return hasChanges;
+    }
+
 
     private bool TryRewrite(ImmutableArray<Expression> expressions, out ImmutableArray<Expression> newExpressions)
         => TryRewriteStrict(expressions, out newExpressions);

@@ -111,8 +111,8 @@
       },
       "Azure.Bicep.Types.Az": {
         "type": "Transitive",
-        "resolved": "0.2.756",
-        "contentHash": "arwntdwnNNDJ3AmK0LkT8zXUN73Wo4HTvbKUaq9BI+04wuUIcXpNpLDkYIhdvJfyN8ngwMc9o5T1qTyUggFoWA==",
+        "resolved": "0.2.764",
+        "contentHash": "g+WXBCuNelIX5Co2ZUJ4Ak+aOLzd7AVj/melhG0jLYYFGUUsNlB7o6xRjI57Vjsb1OEDSFNHwh6PUOIQFq1AJA==",
         "dependencies": {
           "Azure.Bicep.Types": "0.5.110"
         }
@@ -151,75 +151,101 @@
       },
       "Azure.Deployments.Core": {
         "type": "Transitive",
-        "resolved": "1.241.0",
-        "contentHash": "ras2E2CErjAb0GUJvHn79W/+ERsRB86nnSxsrv/iXayWQyIyqqOlK5Ebh7NRwYWiSnCn0bqcrXQMZMyq0C3k8g==",
+        "resolved": "1.364.0",
+        "contentHash": "4ylrVR8csYWceLCTX1lKZd4J5K7U3z4bdqQXK/1qcgGEPJbYmYZn5RSkxLxwxFhEsTCUPoun3IHNIWuTTqanWQ==",
         "dependencies": {
           "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
           "Microsoft.PowerPlatform.ResourceStack": "7.0.0.2070",
           "Newtonsoft.Json": "13.0.3",
           "System.Collections.Immutable": "8.0.0",
           "System.Diagnostics.DiagnosticSource": "8.0.1",
+          "System.IO.Packaging": "8.0.1",
+          "System.Memory": "4.5.5",
           "System.Reflection.Emit.Lightweight": "4.7.0"
         }
       },
       "Azure.Deployments.DiffEngine": {
         "type": "Transitive",
-        "resolved": "1.241.0",
-        "contentHash": "nOBRBe/ouiGYmrMPnrGju9s4V83zmSEshGGHme0U8A2OWEocTGhLFBdyIi0v9UJxv5PWqR1oPcIGfFbq6eUXCg=="
+        "resolved": "1.364.0",
+        "contentHash": "VBSUmOS9qX2kKn+0F9e6OIZWqdw/qA16lmqDEcP9mT1xW3utt3AQxcPUi1ZrcrTATXfUc3KzwaFoNZMOujGGzQ=="
       },
       "Azure.Deployments.Engine": {
         "type": "Transitive",
-        "resolved": "1.241.0",
-        "contentHash": "QEwBJtFiIFFeuvimtCIoVlmbQYi9WZlhgAVV9czDWHmN+okFeZsqWHPbW5VUk1j/A90nz6yKwu/lK/z/cPkVEA==",
+        "resolved": "1.364.0",
+        "contentHash": "MRXgnS0XOsxeUXHgOjDaFJDiwIqpKHMNyV4Qk+Olk9wLMn7FE0EBPD7b3gqNSgjbNw0hYQP47W8q0JpM+605aw==",
         "dependencies": {
-          "Azure.Deployments.Core": "1.241.0",
-          "Azure.Deployments.DiffEngine": "1.241.0",
-          "Azure.Deployments.Extensibility": "1.241.0",
-          "Azure.Deployments.ResourceMetadata": "1.17.0",
-          "Azure.Deployments.Templates": "1.241.0",
-          "Microsoft.AspNet.WebApi.Client": "5.2.9",
+          "Azure.Bicep.Types": "0.5.110",
+          "Azure.Deployments.Core": "1.364.0",
+          "Azure.Deployments.DiffEngine": "1.364.0",
+          "Azure.Deployments.Extensibility": "1.364.0",
+          "Azure.Deployments.ResourceMetadata": "1.71.0",
+          "Azure.Deployments.Templates": "1.364.0",
+          "IPNetwork2": "2.6.598",
+          "JsonDiffPatch.Net": "2.3.0",
+          "Microsoft.AspNet.WebApi.Client": "6.0.0",
+          "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
           "Microsoft.Extensions.DependencyInjection": "8.0.1",
+          "Microsoft.PowerPlatform.ResourceStack": "7.0.0.2070",
           "Newtonsoft.Json": "13.0.3",
           "Sprache.StrongNamed": "2.3.2",
-          "System.Diagnostics.DiagnosticSource": "8.0.1"
+          "System.Collections.Immutable": "8.0.0",
+          "System.Diagnostics.DiagnosticSource": "8.0.1",
+          "System.IO.Packaging": "8.0.1",
+          "System.Memory": "4.5.5",
+          "System.Reflection.Emit.Lightweight": "4.7.0",
+          "System.Text.Json": "8.0.5"
         }
       },
       "Azure.Deployments.Expression": {
         "type": "Transitive",
-        "resolved": "1.241.0",
-        "contentHash": "S38SjIXtrkWwerV8jjxbqIFP7TPbIz2PiJiR+IcmfdMq1e558ZFlY2dmI89hoYjHFvJkZOiFDbXjP667i7gNBQ==",
+        "resolved": "1.364.0",
+        "contentHash": "2ORTapDJ1+lXVrmKDD5FDelDDi7B+RU+c3lkIAZtiGrdqMSJ8HDHrMgs+nmg8u8WX+woH4bRM4zpyJh8Z4IMRg==",
         "dependencies": {
-          "Azure.Deployments.Core": "1.241.0",
+          "Azure.Deployments.Core": "1.364.0",
           "IPNetwork2": "2.6.598",
-          "Newtonsoft.Json": "13.0.3"
+          "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
+          "Microsoft.PowerPlatform.ResourceStack": "7.0.0.2070",
+          "Newtonsoft.Json": "13.0.3",
+          "System.Collections.Immutable": "8.0.0",
+          "System.Diagnostics.DiagnosticSource": "8.0.1",
+          "System.IO.Packaging": "8.0.1",
+          "System.Memory": "4.5.5",
+          "System.Reflection.Emit.Lightweight": "4.7.0"
         }
       },
       "Azure.Deployments.Extensibility": {
         "type": "Transitive",
-        "resolved": "1.241.0",
-        "contentHash": "ElZMl+GNs9wivciZJQAYwfgHolojz2oSvBj48TXnP15OJaQh15eONbR0T38a4XaOpUP87j4RBjLjHtVVbH3aeA==",
+        "resolved": "1.364.0",
+        "contentHash": "r7jyzWIh1vOhz2tC47CEkn/HxO3VqGdMogYNRa12/w3EVKX03f5vf59u2X3f/8Hw7IQ4AmWiuUcSLliR8ARUDw==",
         "dependencies": {
-          "Azure.Deployments.Core": "1.241.0",
-          "Microsoft.AspNet.WebApi.Client": "5.2.9",
+          "Azure.Deployments.Core": "1.364.0",
+          "Microsoft.AspNet.WebApi.Client": "6.0.0",
+          "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
+          "Microsoft.PowerPlatform.ResourceStack": "7.0.0.2070",
           "Newtonsoft.Json": "13.0.3",
+          "System.Collections.Immutable": "8.0.0",
+          "System.Diagnostics.DiagnosticSource": "8.0.1",
+          "System.IO.Packaging": "8.0.1",
+          "System.Memory": "4.5.5",
+          "System.Reflection.Emit.Lightweight": "4.7.0",
           "System.Text.Json": "8.0.5"
         }
       },
       "Azure.Deployments.Extensibility.Core": {
         "type": "Transitive",
-        "resolved": "0.1.55",
-        "contentHash": "iMZhx89YLqHaPGA20LXlzDBty7ov/UgOdxLudJtYwBXkalfSRHLPNKRnJVeGM3EZc9897LeoPyfJ8NvyLeZcgQ==",
+        "resolved": "0.1.67",
+        "contentHash": "0fMjp82TFQvW95Le0PENdeMV81fiyUFY0TGR6XHr6gb7i2w2SK/z9txS83kAjTh9JOCFG7lGt0uxeuwjhGMpuA==",
         "dependencies": {
-          "JsonPatch.Net": "3.1.0",
-          "JsonPath.Net": "1.1.0",
-          "JsonPointer.Net": "5.0.0",
-          "JsonSchema.Net": "7.0.4"
+          "JsonPatch.Net": "3.1.1",
+          "JsonPath.Net": "1.1.6",
+          "JsonPointer.Net": "5.0.2",
+          "JsonSchema.Net": "7.2.3"
         }
       },
       "Azure.Deployments.JsonPath": {
         "type": "Transitive",
-        "resolved": "1.17.0",
-        "contentHash": "39AqRvdKPWMogv2FRYqfdYcmqW6O8CKuyIAJd0DKguIKtW2djhs129lH/Sn6Ykqq+ex3MaMzRkM9aXQtu/cUew==",
+        "resolved": "1.71.0",
+        "contentHash": "lvtjF0k8D9wlJ9P4dV3ioTmujsx/YpY8ZpClsBc6ElkQGNUmNGy+p75F1rtbrfyxM5ggY7ouvkSE8fao7Qhz4A==",
         "dependencies": {
           "JetBrains.Annotations": "2019.1.3",
           "Newtonsoft.Json": "13.0.1",
@@ -228,10 +254,10 @@
       },
       "Azure.Deployments.ResourceMetadata": {
         "type": "Transitive",
-        "resolved": "1.17.0",
-        "contentHash": "ddndCjpzgr9BQ++sQuXWHim4Ec0a3JAKCexbdC6pe36ASEhgE3LLmBypGzYX3v2ouBnp3JgJthO3bKh1kdmwew==",
+        "resolved": "1.71.0",
+        "contentHash": "s5CSlarN0KVWL8Sqy0ISG13ub/bqtQBH0OSpKYU/MvtWEgU4Y/6bkjuB7HAvGGqUMZlBeDj9kkR7yqI4ozp4Tw==",
         "dependencies": {
-          "Azure.Deployments.JsonPath": "1.17.0",
+          "Azure.Deployments.JsonPath": "1.71.0",
           "IPNetwork2": "2.6.548",
           "JetBrains.Annotations": "2019.1.3",
           "JsonDiffPatch.Net": "2.1.0",
@@ -240,14 +266,22 @@
       },
       "Azure.Deployments.Templates": {
         "type": "Transitive",
-        "resolved": "1.241.0",
-        "contentHash": "VEX9i8sJDAcaDDXEyAgjOoCht9Zfk3S4encZ2EEko84resT69x4fmhL30PbJkSK1mQYaz4XLnLNHyOttpxER7A==",
+        "resolved": "1.364.0",
+        "contentHash": "OYJfjHecg5Wx9lEE+oUuBafANdTTkBOYCkrie4L3A3EYiMhWG/Ei6NQmkdbJ6VMyrhTaoehesQlmoFWD6q+YVQ==",
         "dependencies": {
           "Azure.Bicep.Types": "0.5.110",
-          "Azure.Deployments.Core": "1.241.0",
-          "Azure.Deployments.Expression": "1.241.0",
-          "Microsoft.Automata.SRM": "1.2.2",
-          "Newtonsoft.Json": "13.0.3"
+          "Azure.Deployments.Core": "1.364.0",
+          "Azure.Deployments.Expression": "1.364.0",
+          "IPNetwork2": "2.6.598",
+          "Microsoft.Bcl.AsyncInterfaces": "8.0.0",
+          "Microsoft.PowerPlatform.ResourceStack": "7.0.0.2070",
+          "Newtonsoft.Json": "13.0.3",
+          "System.Collections.Immutable": "8.0.0",
+          "System.Diagnostics.DiagnosticSource": "8.0.1",
+          "System.IO.Packaging": "8.0.1",
+          "System.Memory": "4.5.5",
+          "System.Reflection.Emit.Lightweight": "4.7.0",
+          "System.Text.Json": "8.0.5"
         }
       },
       "Azure.Identity": {
@@ -350,8 +384,8 @@
       },
       "Json.More.Net": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "qtwsyAsL55y2vB2/sK4Pjg3ZyVzD5KKSpV3lOAMHlnjFfsjQ/86eHJfQT9aV1YysVXzF4+xyHOZbh7Iu3YQ7Lg=="
+        "resolved": "2.1.1",
+        "contentHash": "ZXAKl2VsdnIZeUo1PFII3Oi1m1L4YQjEyDjygHfHln5vgsjgIo749X6xWkv7qFYp8RROES+vOEfDcvvoVgs8kA=="
       },
       "JsonPatch.Net": {
         "type": "Transitive",
@@ -363,10 +397,10 @@
       },
       "JsonPath.Net": {
         "type": "Transitive",
-        "resolved": "2.0.1",
-        "contentHash": "St/l0QIkHSqUNKqQ8iT1yvbJUpTFH1kl5V1zlU+aY8gxU0VKszMNL9qfgT4QvWGICfInh17NgBSFDF5RH38Emw==",
+        "resolved": "2.1.1",
+        "contentHash": "HYq/rUkfpChS2O1tnkR0ocBxHL60jZDORNXd6nO3D6I21MA1M7Idvd0m31X9yLkriNSatAih0Ho3QRDvU/G0cg==",
         "dependencies": {
-          "Json.More.Net": "2.1.0"
+          "Json.More.Net": "2.1.1"
         }
       },
       "JsonPointer.Net": {
@@ -380,8 +414,8 @@
       },
       "JsonSchema.Net": {
         "type": "Transitive",
-        "resolved": "7.0.4",
-        "contentHash": "R0Hk2Tr/np4Q1NO8CBjyQsoiD1iFJyEQP20Sw7JnZCNGJoaSBe+g4b+nZqnBXPQhiqY5LGZ8JZwZkRh/eKZhEQ==",
+        "resolved": "7.2.3",
+        "contentHash": "O3KclMcPVFYTZsTeZBpwtKd/lYrNc3AFR+xi9j3Q4CfhDufOUx25TMMWJOcFRrqVklvKQ4Kl+0UhlNX1iDGoRw==",
         "dependencies": {
           "JsonPointer.Net": "5.0.0"
         }
@@ -408,16 +442,6 @@
           "Newtonsoft.Json.Bson": "1.0.2",
           "System.Memory": "4.5.5",
           "System.Threading.Tasks.Extensions": "4.5.4"
-        }
-      },
-      "Microsoft.Automata.SRM": {
-        "type": "Transitive",
-        "resolved": "1.2.2",
-        "contentHash": "+tdYyUEbSOO5q86TOHKzy7MiT/gqTq4aEpOmFglMw9GDXM0BnT93AG02YT29Wi+qCZmt+APPy+VJEgHUEa89Mw==",
-        "dependencies": {
-          "System.Collections.Immutable": "1.6.0",
-          "System.Numerics.Vectors": "4.5.0",
-          "System.Runtime.CompilerServices.Unsafe": "4.5.2"
         }
       },
       "Microsoft.Bcl.AsyncInterfaces": {
@@ -451,18 +475,18 @@
       },
       "Microsoft.Extensions.Configuration.Abstractions": {
         "type": "Transitive",
-        "resolved": "9.0.2",
-        "contentHash": "I0O/270E/lUNqbBxlRVjxKOMZyYjP88dpEgQTveml+h2lTzAP4vbawLVwjS9SC7lKaU893bwyyNz0IVJYsm9EA==",
+        "resolved": "9.0.4",
+        "contentHash": "0LN/DiIKvBrkqp7gkF3qhGIeZk6/B63PthAHjQsxymJfIBcz0kbf4/p/t4lMgggVxZ+flRi5xvTwlpPOoZk8fg==",
         "dependencies": {
-          "Microsoft.Extensions.Primitives": "9.0.2"
+          "Microsoft.Extensions.Primitives": "9.0.4"
         }
       },
       "Microsoft.Extensions.Configuration.Binder": {
         "type": "Transitive",
-        "resolved": "9.0.1",
-        "contentHash": "w7kAyu1Mm7eParRV6WvGNNwA8flPTub16fwH49h7b/yqJZFTgYxnOVCuiah3G2bgseJMEq4DLjjsyQRvsdzRgA==",
+        "resolved": "9.0.4",
+        "contentHash": "cdrjcl9RIcwt3ECbnpP0Gt1+pkjdW90mq5yFYy8D9qRj2NqFFcv3yDp141iEamsd9E218sGxK8WHaIOcrqgDJg==",
         "dependencies": {
-          "Microsoft.Extensions.Configuration.Abstractions": "9.0.1"
+          "Microsoft.Extensions.Configuration.Abstractions": "9.0.4"
         }
       },
       "Microsoft.Extensions.Configuration.FileExtensions": {
@@ -615,8 +639,8 @@
       },
       "Microsoft.Extensions.Primitives": {
         "type": "Transitive",
-        "resolved": "9.0.2",
-        "contentHash": "puBMtKe/wLuYa7H6docBkLlfec+h8L35DXqsDKKJgW0WY5oCwJ3cBJKcDaZchv6knAyqOMfsl6VUbaR++E5LXA=="
+        "resolved": "9.0.4",
+        "contentHash": "SPFyMjyku1nqTFFJ928JAMd0QnRe4xjE7KeKnZMWXf3xk+6e0WiOZAluYtLdbJUXtsl2cCRSi8cBquJ408k8RA=="
       },
       "Microsoft.Identity.Client": {
         "type": "Transitive",
@@ -1555,16 +1579,16 @@
         "dependencies": {
           "Azure.Bicep.IO": "[1.0.0, )",
           "Azure.Bicep.Types": "[0.5.110, )",
-          "Azure.Bicep.Types.Az": "[0.2.756, )",
+          "Azure.Bicep.Types.Az": "[0.2.764, )",
           "Azure.Bicep.Types.K8s": "[0.1.644, )",
           "Azure.Containers.ContainerRegistry": "[1.1.1, )",
-          "Azure.Deployments.Templates": "[1.224.0, )",
+          "Azure.Deployments.Templates": "[1.364.0, )",
           "Azure.Identity": "[1.13.2, )",
           "Azure.ResourceManager.Resources": "[1.9.0, )",
           "JsonPatch.Net": "[3.3.0, )",
-          "JsonPath.Net": "[2.0.1, )",
+          "JsonPath.Net": "[2.1.1, )",
           "Microsoft.Extensions.Configuration": "[9.0.2, )",
-          "Microsoft.Extensions.Configuration.Binder": "[9.0.1, )",
+          "Microsoft.Extensions.Configuration.Binder": "[9.0.4, )",
           "Microsoft.Extensions.Configuration.Json": "[9.0.0, )",
           "Microsoft.Extensions.DependencyInjection": "[9.0.2, )",
           "Microsoft.Extensions.Http": "[8.0.1, )",
@@ -1595,8 +1619,8 @@
         "dependencies": {
           "Azure.Bicep.Core": "[1.0.0, )",
           "Azure.Bicep.Local.Extension": "[1.0.0, )",
-          "Azure.Deployments.Engine": "[1.241.0, )",
-          "Azure.Deployments.Extensibility.Core": "[0.1.55, )",
+          "Azure.Deployments.Engine": "[1.364.0, )",
+          "Azure.Deployments.Extensibility.Core": "[0.1.67, )",
           "Microsoft.AspNet.WebApi.Client": "[6.0.0, )"
         }
       },

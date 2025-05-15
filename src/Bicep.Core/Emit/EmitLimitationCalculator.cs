@@ -11,7 +11,6 @@ using Bicep.Core.Intermediate;
 using Bicep.Core.Navigation;
 using Bicep.Core.Semantics;
 using Bicep.Core.Semantics.Metadata;
-using Bicep.Core.SourceGraph;
 using Bicep.Core.Syntax;
 using Bicep.Core.Syntax.Visitors;
 using Bicep.Core.Text;
@@ -19,8 +18,6 @@ using Bicep.Core.TypeSystem;
 using Bicep.Core.TypeSystem.Providers;
 using Bicep.Core.TypeSystem.Providers.Az;
 using Bicep.Core.TypeSystem.Types;
-using Bicep.Core.Utils;
-using Microsoft.WindowsAzure.ResourceStack.Common.Extensions;
 using Newtonsoft.Json.Linq;
 
 namespace Bicep.Core.Emit
@@ -40,6 +37,7 @@ namespace Bicep.Core.Emit
             ForSyntaxValidatorVisitor.Validate(model, diagnostics);
             FunctionPlacementValidatorVisitor.Validate(model, diagnostics);
             IntegerValidatorVisitor.Validate(model, diagnostics);
+            ExtensionReferenceValidatorVisitor.Validate(model, diagnostics);
 
             DetectDuplicateNames(model, diagnostics, resourceScopeData, moduleScopeData);
             DetectIncorrectlyFormattedNames(model, diagnostics);
@@ -60,8 +58,9 @@ namespace Bicep.Core.Emit
             BlockExtendsWithoutFeatureFlagEnabled(model, diagnostics);
 
             var paramAssignments = CalculateParameterAssignments(model, diagnostics);
+            var extConfigAssignments = CalculateExtensionConfigAssignments(model, diagnostics);
 
-            return new(diagnostics.GetDiagnostics(), moduleScopeData, resourceScopeData, paramAssignments);
+            return new(diagnostics.GetDiagnostics(), moduleScopeData, resourceScopeData, paramAssignments, extConfigAssignments);
         }
 
         private static void DetectDuplicateNames(SemanticModel semanticModel, IDiagnosticWriter diagnosticWriter, ImmutableDictionary<DeclaredResourceMetadata, ScopeHelper.ScopeData> resourceScopeData, ImmutableDictionary<ModuleSymbol, ScopeHelper.ScopeData> moduleScopeData)
@@ -70,7 +69,6 @@ namespace Bicep.Core.Emit
 
             // This method only checks, if in one deployment we do not have 2 or more resources with this same name in one deployment to avoid template validation error
             // This will not check resource constraints such as necessity of having unique virtual network names within resource group
-
             var duplicateResources = semanticModel.DeclaredResources
                 .GroupBy(x => x, new DeclaredResourceIdComparer(semanticModel, resourceScopeData))
                 .Where(group => group.Count() > 1);
@@ -120,7 +118,7 @@ namespace Bicep.Core.Emit
                 }
 
                 return
-                    // extensibility resources do not have an ARM ID
+                    // extension resources do not have an ARM ID
                     x?.IsAzResource is true &&
                     y?.IsAzResource is true &&
                     // ARM resource ID uniqueness is only enforced on resources with a `true` condition
@@ -153,17 +151,19 @@ namespace Bicep.Core.Emit
             }
 
             private ImmutableArray<IArmIdSegment> NameSegmentsFor(DeclaredResourceMetadata resource)
-                => model.ResourceAncestors.GetAncestors(resource)
-                    .Reverse()
-                    .SelectMany(r => r.IndexExpression switch
-                    {
-                        SyntaxBase idx when model.GetTypeInfo(idx) is IntegerLiteralType literalIndex
-                            => new[] { NameSegmentFor(r.Resource), new LiteralIdSegment(literalIndex.Value.ToString()) },
-                        SyntaxBase idx => new[] { NameSegmentFor(r.Resource), new NonLiteralIdSegment(idx) },
-                        _ => NameSegmentFor(r.Resource).AsEnumerable(),
-                    })
-                    .Append(NameSegmentFor(resource))
-                    .ToImmutableArray();
+                =>
+                [
+                    .. model.ResourceAncestors.GetAncestors(resource)
+                            .Reverse()
+                            .SelectMany(r => r.IndexExpression switch
+                            {
+                                SyntaxBase idx when model.GetTypeInfo(idx) is IntegerLiteralType literalIndex
+                                    => new[] { NameSegmentFor(r.Resource), new LiteralIdSegment(literalIndex.Value.ToString()) },
+                                SyntaxBase idx => new[] { NameSegmentFor(r.Resource), new NonLiteralIdSegment(idx) },
+                                _ => NameSegmentFor(r.Resource).AsEnumerable(),
+                            }),
+                    NameSegmentFor(resource),
+                ];
 
             private IArmIdSegment NameSegmentFor(DeclaredResourceMetadata resource)
                 => IArmIdSegment.For(resource.TryGetNameSyntax(), model) switch
@@ -676,7 +676,6 @@ namespace Bicep.Core.Emit
                 {
                     continue;
                 }
-
                 // We may emit duplicate errors here - type checking will also execute some ARM functions and generate errors
                 // This is something we should improve before the first release.
                 var result = evaluator.EvaluateParameter(parameter);
@@ -684,10 +683,120 @@ namespace Bicep.Core.Emit
                 {
                     diagnostics.Write(result.Diagnostic);
                 }
-                if (result.Value is not null || result.KeyVaultReference is not null)
+                if (result.Value is not null || result.Expression is not null || result.KeyVaultReference is not null)
                 {
-                    generated[parameter] = new(result.Value, result.KeyVaultReference);
+                    generated[parameter] = new(result.Value, result.Expression, result.KeyVaultReference);
                 }
+            }
+
+            return generated.ToImmutableDictionary();
+        }
+
+        private static ImmutableDictionary<ExtensionConfigAssignmentSymbol, ImmutableDictionary<string, ExtensionConfigAssignmentValue>> CalculateExtensionConfigAssignments(SemanticModel model, IDiagnosticWriter diagnostics)
+        {
+            if (model.Root.ExtensionConfigAssignments.IsEmpty ||
+                model.HasParsingErrors())
+            {
+                return ImmutableDictionary<ExtensionConfigAssignmentSymbol, ImmutableDictionary<string, ExtensionConfigAssignmentValue>>.Empty;
+            }
+
+            var referencesInValues = model.Binder.Bindings.Values.OfType<DeclaredSymbol>()
+                .Distinct()
+                .ToImmutableDictionary(p => p, p => SymbolicReferenceCollector.CollectSymbolsReferenced(model.Binder, p.DeclaringSyntax));
+
+            var generated = ImmutableDictionary.CreateBuilder<ExtensionConfigAssignmentSymbol, ImmutableDictionary<string, ExtensionConfigAssignmentValue>>();
+
+            var extendsDeclarations = model.SourceFile.ProgramSyntax.Declarations.OfType<ExtendsDeclarationSyntax>();
+
+            foreach (var extendsDeclaration in extendsDeclarations)
+            {
+                var result = extendsDeclaration.TryGetReferencedModel(model.SourceFileGrouping, model.ModelLookup, b => b.ExtendsPathHasNotBeenSpecified());
+
+                if (result.IsSuccess(out var extendedModel, out var failure))
+                {
+                    if (extendedModel is not SemanticModel extendedSemanticModel)
+                    {
+                        throw new UnreachableException("We have already verified this is a .bicepparam file");
+                    }
+
+                    generated.AddRange(extendedSemanticModel.EmitLimitationInfo.ExtensionConfigAssignments);
+                }
+                else
+                {
+                    diagnostics.Write(failure);
+                }
+            }
+
+            var evaluator = new ParameterAssignmentEvaluator(model);
+            HashSet<Symbol> erroredSymbols = new();
+
+            foreach (var symbol in GetTopologicallySortedSymbols(referencesInValues))
+            {
+                if (symbol.Type is ErrorType)
+                {
+                    // no point evaluating if we're already reporting an error
+                    erroredSymbols.Add(symbol);
+
+                    continue;
+                }
+
+                var referencedValueHasError = false;
+
+                foreach (var referenced in referencesInValues[symbol])
+                {
+                    if (erroredSymbols.Contains(referenced.Key))
+                    {
+                        referencedValueHasError = true;
+                    }
+                    else if (referenced.Key is ExtensionConfigAssignmentSymbol referencedExtConfigAsgmt)
+                    {
+                        foreach (var configPropertyName in generated[referencedExtConfigAsgmt].Keys)
+                        {
+                            var configValue = generated[referencedExtConfigAsgmt][configPropertyName];
+
+                            if (configValue.KeyVaultReferenceExpression is not null)
+                            {
+                                diagnostics.WriteMultiple(referenced.Value.Select(syntax => DiagnosticBuilder.ForPosition(syntax).ParameterReferencesKeyVaultSuppliedParameter(referencedExtConfigAsgmt.Name)));
+                                referencedValueHasError = true;
+                            }
+
+                            if (configValue.Value is JToken evaluated && evaluated.Type == JTokenType.Null)
+                            {
+                                diagnostics.WriteMultiple(referenced.Value.Select(syntax => DiagnosticBuilder.ForPosition(syntax).ParameterReferencesDefaultedParameter(referencedExtConfigAsgmt.Name)));
+                                referencedValueHasError = true;
+                            }
+                        }
+                    }
+                }
+
+                if (referencedValueHasError)
+                {
+                    erroredSymbols.Add(symbol);
+
+                    continue;
+                }
+
+                if (symbol is not ExtensionConfigAssignmentSymbol extConfigAssignment)
+                {
+                    continue;
+                }
+
+                var assignmentProperties = ImmutableDictionary.CreateBuilder<string, ExtensionConfigAssignmentValue>();
+
+                foreach (var (propertyName, result) in evaluator.EvaluateExtensionConfigAssignment(extConfigAssignment))
+                {
+                    if (result.Diagnostic is { })
+                    {
+                        diagnostics.Write(result.Diagnostic);
+                    }
+
+                    if (result.Value is not null || result.KeyVaultReference is not null)
+                    {
+                        assignmentProperties.Add(propertyName, new(result.Value, result.KeyVaultReference));
+                    }
+                }
+
+                generated[extConfigAssignment] = assignmentProperties.ToImmutableDictionary();
             }
 
             return generated.ToImmutableDictionary();
@@ -848,6 +957,19 @@ namespace Bicep.Core.Emit
                 foreach (var spread in body.Children.OfType<SpreadExpressionSyntax>())
                 {
                     diagnostics.Write(spread, x => x.SpreadOperatorUnsupportedInLocation(spread));
+                }
+            }
+
+            foreach (var spread in SyntaxAggregator.AggregateByType<SpreadExpressionSyntax>(model.Root.Syntax))
+            {
+                if (model.Binder.GetParent(spread) is not ObjectSyntax parentObject)
+                {
+                    continue;
+                }
+
+                if (parentObject.Properties.Any(x => x.Value is ForSyntax))
+                {
+                    diagnostics.Write(spread, x => x.SpreadOperatorCannotBeUsedWithForLoop(spread));
                 }
             }
         }
