@@ -199,6 +199,8 @@ namespace Bicep.LanguageServer.Completions
 
                         yield return CreateKeywordCompletion(LanguageConstants.ParameterKeyword, "Parameter assignment keyword", context.ReplacementRange);
 
+                        yield return CreateKeywordCompletion(LanguageConstants.ExtendsKeyword, "Extends keyword", context.ReplacementRange);
+
                         break;
 
                     default:
@@ -1067,9 +1069,9 @@ namespace Bicep.LanguageServer.Completions
                         break;
                     }
 
-                    if (scope.ScopeResolution == ScopeResolution.InheritFunctionsOnly)
+                    if (scope.ScopeResolution == ScopeResolution.InheritFunctionsAndVariablesOnly)
                     {
-                        symbolFilter = symbol => symbol is DeclaredFunctionSymbol;
+                        symbolFilter = symbol => symbol is VariableSymbol or ImportedVariableSymbol or DeclaredFunctionSymbol or ImportedFunctionSymbol or WildcardImportSymbol;
                     }
                 }
             }
