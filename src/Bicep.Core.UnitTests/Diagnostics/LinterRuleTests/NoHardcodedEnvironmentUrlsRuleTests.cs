@@ -57,11 +57,6 @@ namespace Bicep.Core.UnitTests.Diagnostics.LinterRuleTests
         output sub int = sum
         ")]
         [DataRow(1, @"
-        param param1 string
-        var location = 'http://MANAGEMENT.core.windows.net'
-        output sub int = sum
-        ")]
-        [DataRow(1, @"
         resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
           name: 'name'
           location: resourceGroup().location
@@ -205,6 +200,36 @@ namespace Bicep.Core.UnitTests.Diagnostics.LinterRuleTests
                     diags.Select(d => d.Code).Should().AllBe(NoHardcodedEnvironmentUrlsRule.Code);
                 }
             });
+        }
+
+        [DataRow(0, @"
+        @description('Required. The full uri for the encrypt key from key vault. Example: https://<keyvaultname>.vault.azure.net/keys/<keyname>/<version>.')
+        param keyVaultUri string
+        ")]
+        [DataRow(0, @"
+        @sys.description('Required. The full uri for the encrypt key from key vault. Example: https://<keyvaultname>.vault.azure.net/keys/<keyname>/<version>.')
+        param keyVaultUri string
+        ")]
+        [DataRow(0, @"
+        @metadata({
+          description: 'Required. The full uri for the encrypt key from key vault. Example: https://<keyvaultname>.vault.azure.net/keys/<keyname>/<version>.'
+        })
+        param keyVaultUri string
+        ")]
+        [DataRow(0, @"
+        @metadata({
+          description: 'Required. The full uri for the encrypt key from key vault. Example: https://<keyvaultname>.vault.azure.net/keys/<keyname>/<version>.',
+          otherProperty: 'some other value'
+        })
+        param keyVaultUri string
+        ")]
+        [DataRow(1, @"
+        param keyVaultUri string = 'https://<keyvaultname>.vault.azure.net/keys/<keyname>/<version>'
+        ")]
+        [DataTestMethod]
+        public void ShouldSkipDescriptionAndMetadataDecorators(int diagnosticCount, string text)
+        {
+            AssertLinterRuleDiagnostics(NoHardcodedEnvironmentUrlsRule.Code, text, diagnosticCount, new Options(OnCompileErrors.Ignore));
         }
     }
 }

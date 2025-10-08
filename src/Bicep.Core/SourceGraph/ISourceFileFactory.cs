@@ -6,19 +6,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bicep.IO.Abstraction;
 
 namespace Bicep.Core.SourceGraph
 {
     public interface ISourceFileFactory
     {
-        ISourceFile CreateSourceFile(Uri fileUri, string fileContents, Type? sourceFileType = null);
+        ISourceFile CreateSourceFile(IOUri fileUri, string fileContents, Type? sourceFileType = null);
 
-        BicepFile CreateBicepFile(Uri fileUri, string fileContents);
+        BicepFile CreateBicepFile(IOUri fileUri, string fileContents);
 
-        BicepParamFile CreateBicepParamFile(Uri fileUri, string fileContents);
+        BicepFile CreateBicepFile(IFileHandle fileHandle, string fileContents);
 
-        ArmTemplateFile CreateArmTemplateFile(Uri fileUri, string fileContents);
+        BicepParamFile CreateBicepParamFile(IOUri fileUri, string fileContents);
+        
+        BicepReplFile CreateBicepReplFile(IFileHandle fileHandle, string fileContents);
 
-        TemplateSpecFile CreateTemplateSpecFile(Uri fileUri, string fileContents);
+        ArmTemplateFile CreateArmTemplateFile(IOUri fileUri, string fileContents);
+
+        ArmTemplateFile CreateArmTemplateFile(IFileHandle fileHandle, string fileContents);
+
+        TemplateSpecFile CreateTemplateSpecFile(IOUri fileUri, string fileContents);
     }
 }

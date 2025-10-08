@@ -413,6 +413,17 @@ public record ExtensionReferenceExpression(
     protected override object? GetDebugAttributes() => new { ExtensionAlias = ExtensionNamespace.Name };
 }
 
+public record ExtensionConfigAssignmentReferenceExpression(
+    SyntaxBase? SourceSyntax,
+    ExtensionConfigAssignmentSymbol ExtensionConfigAssignment
+) : Expression(SourceSyntax)
+{
+    public override void Accept(IExpressionVisitor visitor)
+        => visitor.VisitExtensionConfigAssignmentReferenceExpression(this);
+
+    protected override object? GetDebugAttributes() => new { ExtensionAlias = ExtensionConfigAssignment.Name };
+}
+
 public abstract record TypeDeclaringExpression(
     SyntaxBase? SourceSyntax,
     Expression? Description,
@@ -422,7 +433,8 @@ public abstract record TypeDeclaringExpression(
     Expression? MaxLength,
     Expression? MinValue,
     Expression? MaxValue,
-    Expression? Sealed
+    Expression? Sealed,
+    ArrayExpression? UserDefinedConstraint
 ) : DescribableExpression(SourceSyntax, Description)
 { }
 
@@ -439,8 +451,9 @@ public record DeclaredParameterExpression(
     Expression? MinValue = null,
     Expression? MaxValue = null,
     Expression? Sealed = null,
+    ArrayExpression? UserDefinedConstraint = null,
     Expression? AllowedValues = null
-) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed)
+) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed, UserDefinedConstraint)
 {
     public override void Accept(IExpressionVisitor visitor)
         => visitor.VisitDeclaredParameterExpression(this);
@@ -475,8 +488,9 @@ public record DeclaredOutputExpression(
     Expression? MaxLength = null,
     Expression? MinValue = null,
     Expression? MaxValue = null,
-    Expression? Sealed = null
-) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed)
+    Expression? Sealed = null,
+    ArrayExpression? UserDefinedConstraint = null
+) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed, UserDefinedConstraint)
 {
     public override void Accept(IExpressionVisitor visitor)
         => visitor.VisitDeclaredOutputExpression(this);
@@ -642,8 +656,9 @@ public record DeclaredTypeExpression(
     Expression? MinValue = null,
     Expression? MaxValue = null,
     Expression? Sealed = null,
+    ArrayExpression? UserDefinedConstraint = null,
     Expression? Exported = null
-) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed)
+) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed, UserDefinedConstraint)
 {
     public override void Accept(IExpressionVisitor visitor)
         => visitor.VisitDeclaredTypeExpression(this);
@@ -842,8 +857,9 @@ public record ObjectTypePropertyExpression(
     Expression? MaxLength = null,
     Expression? MinValue = null,
     Expression? MaxValue = null,
-    Expression? Sealed = null
-) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed)
+    Expression? Sealed = null,
+    ArrayExpression? UserDefinedConstraint = null
+) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed, UserDefinedConstraint)
 {
     public override void Accept(IExpressionVisitor visitor)
         => visitor.VisitObjectTypePropertyExpression(this);
@@ -859,8 +875,9 @@ public record ObjectTypeAdditionalPropertiesExpression(
     Expression? MaxLength = null,
     Expression? MinValue = null,
     Expression? MaxValue = null,
-    Expression? Sealed = null
-) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed)
+    Expression? Sealed = null,
+    ArrayExpression? UserDefinedConstraint = null
+) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed, UserDefinedConstraint)
 {
     public override void Accept(IExpressionVisitor visitor)
         => visitor.VisitObjectTypeAdditionalPropertiesExpression(this);
@@ -887,8 +904,9 @@ public record TupleTypeItemExpression(
     Expression? MaxLength = null,
     Expression? MinValue = null,
     Expression? MaxValue = null,
-    Expression? Sealed = null
-) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed)
+    Expression? Sealed = null,
+    ArrayExpression? UserDefinedConstraint = null
+) : TypeDeclaringExpression(SourceSyntax, Description, Metadata, Secure, MinLength, MaxLength, MinValue, MaxValue, Sealed, UserDefinedConstraint)
 {
     public override void Accept(IExpressionVisitor visitor)
         => visitor.VisitTupleTypeItemExpression(this);

@@ -9,6 +9,7 @@ using Bicep.Core.UnitTests;
 using Bicep.Core.UnitTests.Assertions;
 using Bicep.Core.UnitTests.Extensions;
 using Bicep.Core.UnitTests.Utils;
+using Bicep.TextFixtures.Mocks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
@@ -694,7 +695,7 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
         [DataRow(
             "MainFile",
             "BCP037",
-            """The property "extensionConfigs" is not allowed on objects of type "module". Permissible properties include "dependsOn", "scope".""")]
+            """The property "extensionConfigs" is not allowed on objects of type "module". Permissible properties include "dependsOn", "identity", "scope".""")]
         public void Extension_config_assignments_raise_error_diagnostic_if_expr_feature_disabled(string scenario, string expectedDiagnosticCode, string expectedDiagnosticMessage)
         {
             var paramsUri = new Uri("file:///main.bicepparam");
@@ -754,15 +755,13 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
 
             var compilation = CreateServiceBuilder().BuildCompilation(files, paramsUri);
 
-            var diagByFile = compilation.GetAllDiagnosticsByBicepFileUri();
-
             var fileUriWithDiag = scenario is "ParamsFile" ? paramsUri : mainUri;
 
-            diagByFile[fileUriWithDiag].Should().ContainDiagnostic(expectedDiagnosticCode, DiagnosticLevel.Error, expectedDiagnosticMessage);
+            compilation.GetSourceFileDiagnostics(fileUriWithDiag).Should().ContainDiagnostic(expectedDiagnosticCode, DiagnosticLevel.Error, expectedDiagnosticMessage);
 
             if (scenario is "MainFile")
             {
-                diagByFile[mainUri].Should().ContainDiagnostic("BCP052", DiagnosticLevel.Error, """The type "k8s" does not contain property "config".""");
+                compilation.GetSourceFileDiagnostics(mainUri).Should().ContainDiagnostic("BCP052", DiagnosticLevel.Error, """The type "k8s" does not contain property "config".""");
             }
         }
 
@@ -902,37 +901,44 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
             "extensionConfig k8s",
             "extension kubernetes as k8s",
             "BCP206",
-            "Extension \"k8s\" requires configuration, but none was provided.")]
+            """Extension "k8s" requires configuration, but none was provided.""")]
         [DataRow(
             "RequiredAssignmentMissing",
             "",
             "extension kubernetes as k8s",
             "BCP424",
-            "The following extensions are declared in the Bicep file but are missing a configuration assignment in the params files: \"k8s\".")]
+            """The following extensions are declared in the Bicep file but are missing a configuration assignment in the params files: "k8s".""")]
         [DataRow(
             "AssignmentDoesNotMatch",
             "extensionConfig k8s with { kubeConfig: '' }",
             "",
             "BCP425",
-            "The extension configuration assignment for \"k8s\" does not match an extension in the Bicep file.")]
+            """The extension configuration assignment for "k8s" does not match an extension in the Bicep file.""")]
         [DataRow(
             "DiscriminatedType_AssignmentMissingProperties",
             "extensionConfig mockExt with { a2: 'a1 not defined' }",
             "extension 'br:mcr.microsoft.com/bicep/extensions/configdiscrimobj/v1:1.2.3' with { discrim: 'a' } as mockExt",
             "BCP035",
-            "The specified \"object\" declaration is missing the following required properties: \"a1\".")]
+            """The specified "object" declaration is missing the following required properties: "a1".""")]
         [DataRow(
             "DiscriminatedType_DiscrimReassignment",
             "extensionConfig mockExt with { discrim: 'a', b1: 'here to suppress diag because b type is selected' }",
             "extension 'br:mcr.microsoft.com/bicep/extensions/configdiscrimobj/v1:1.2.3' with { discrim: 'b' } as mockExt",
             "BCP037",
-            "The property \"discrim\" is not allowed on objects of type \"b\". Permissible properties include \"z1\".")]
+            """The property "discrim" is not allowed on objects of type "b". Permissible properties include "z1".""")]
         [DataRow(
             "DiscriminatedType_BicepLimitationForSharedPropertiesWithoutDiscrim",
             "extensionConfig mockExt with { discrim: 'b' }",
             "extension 'br:mcr.microsoft.com/bicep/extensions/configdiscrimobj/v1:1.2.3' with { z1: 'shared property' } as mockExt",
             "BCP078",
-            "The property \"discrim\" requires a value of type \"'a' | 'b'\", but none was supplied.")]
+            """The property "discrim" requires a value of type "'a' | 'b'", but none was supplied.""")]
+        [DataRow(
+            "TernaryLimitation",
+            "extensionConfig mockExt with { requiredSecureString: bool(readEnvironmentVariable('xyz', 'false')) ? az.getSecret('a', 'b', 'c', 'd') : az.getSecret('w', 'x', 'y', 'z') }",
+            "extension 'br:mcr.microsoft.com/bicep/extensions/secureconfig/v1:1.2.3' as mockExt",
+            "BCP338",
+            """Failed to evaluate extension config "mockExt": Cannot emit unexpected expression of type ParameterKeyVaultReferenceExpression"""
+        )]
         public async Task Invalid_extension_config_assignments_should_raise_error_diagnostic(string scenario, string paramsFileExtensionConfigAssignment, string bicepFileExtensionDeclaration, string expectedDiagnosticCode, string expectedDiagnosticMessage)
         {
             var paramsUri = new Uri("file:///main.bicepparam");
@@ -951,22 +957,20 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
 
             var services = CreateServiceBuilder(moduleExtensionConfigsEnabled: true);
 
-            await ExtensionTestHelper.AddMockExtensions(services, TestContext, CreateMockExtWithDiscriminatedConfigType());
+            await ExtensionTestHelper.AddMockExtensions(services, TestContext, CreateMockExtWithDiscriminatedConfigType(), CreateMockExtWithSecureConfigType());
 
             var compilation = await services.BuildCompilationWithRestore(files, paramsUri);
 
-            var diagByFileUri = compilation.GetAllDiagnosticsByBicepFileUri();
-
             if (scenario is "DiscriminatedType_BicepLimitationForSharedPropertiesWithoutDiscrim")
             {
-                diagByFileUri[mainUri].Should().ContainSingleDiagnostic(expectedDiagnosticCode, DiagnosticLevel.Error, expectedDiagnosticMessage);
-                diagByFileUri[paramsUri].Should().ContainDiagnostic("BCP035", DiagnosticLevel.Error, "The specified \"object\" declaration is missing the following required properties: \"b1\".");
+                compilation.GetSourceFileDiagnostics(mainUri).Should().ContainSingleDiagnostic(expectedDiagnosticCode, DiagnosticLevel.Error, expectedDiagnosticMessage);
+                compilation.GetSourceFileDiagnostics(paramsUri).Should().ContainDiagnostic("BCP035", DiagnosticLevel.Error, "The specified \"object\" declaration is missing the following required properties: \"b1\".");
 
                 return;
             }
 
-            diagByFileUri[mainUri].ExcludingLinterDiagnostics().Should().BeEmpty();
-            diagByFileUri[paramsUri].Should().ContainSingleDiagnostic(expectedDiagnosticCode, DiagnosticLevel.Error, expectedDiagnosticMessage);
+            compilation.GetSourceFileDiagnostics(mainUri).ExcludingLinterDiagnostics().Should().BeEmpty();
+            compilation.GetSourceFileDiagnostics(paramsUri).Should().ContainSingleDiagnostic(expectedDiagnosticCode, DiagnosticLevel.Error, expectedDiagnosticMessage);
         }
 
         [TestMethod]
@@ -1001,13 +1005,12 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
 
             var compilation = await services.BuildCompilationWithRestore(files, paramsUri);
 
-            var diagByFileUri = compilation.GetAllDiagnosticsByBicepFileUri();
-            diagByFileUri[mainUri].ExcludingLinterDiagnostics().Should().BeEmpty();
-            diagByFileUri[paramsUri].Should().ContainSingleDiagnostic("BCP424", DiagnosticLevel.Error, "The following extensions are declared in the Bicep file but are missing a configuration assignment in the params files: \"mockExtDiscrim\", \"mockExtDiscrim2\", \"mockExtObj\".");
+            compilation.GetSourceFileDiagnostics(mainUri).ExcludingLinterDiagnostics().Should().BeEmpty();
+            compilation.GetSourceFileDiagnostics(paramsUri).Should().ContainSingleDiagnostic("BCP424", DiagnosticLevel.Error, "The following extensions are declared in the Bicep file but are missing a configuration assignment in the params files: \"mockExtDiscrim\", \"mockExtDiscrim2\", \"mockExtObj\".");
 
             var paramsCompilationResult = CompilationHelper.CompileParams(compilation);
 
-            var codeFixDiag = diagByFileUri[paramsUri].Single(d => d.Code == "BCP424");
+            var codeFixDiag = compilation.GetSourceFileDiagnostics(paramsUri).Single(d => d.Code == "BCP424");
 
             paramsCompilationResult.ApplyCodeFix(codeFixDiag)
                 .Should()
@@ -1058,11 +1061,11 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
             return services;
         }
 
-        private static RegistrySourcedExtensionMockData CreateMockExtWithNoConfigType(string extName = "noconfig") =>
+        private static MockExtensionData CreateMockExtWithNoConfigType(string extName = "noconfig") =>
             ExtensionTestHelper.CreateMockExtensionMockData(
                 extName, "1.2.3", "v1", CustomExtensionTypeFactoryDelegates.NoTypes);
 
-        private static RegistrySourcedExtensionMockData CreateMockExtWithObjectConfigType(string extName = "configobj") =>
+        private static MockExtensionData CreateMockExtWithObjectConfigType(string extName = "configobj") =>
             ExtensionTestHelper.CreateMockExtensionMockData(
                 extName, "1.2.3", "v1", new CustomExtensionTypeFactoryDelegates
                 {
@@ -1076,7 +1079,20 @@ resource parent 'az:Microsoft.Storage/storageAccounts@2020-01-01' existing = {
                         null))
                 });
 
-        private static RegistrySourcedExtensionMockData CreateMockExtWithDiscriminatedConfigType(string extName = "configdiscrimobj") =>
+        private static MockExtensionData CreateMockExtWithSecureConfigType(string extName = "secureconfig") =>
+            ExtensionTestHelper.CreateMockExtensionMockData(
+                extName, "1.2.3", "v1", new CustomExtensionTypeFactoryDelegates
+                {
+                    CreateConfigurationType = (ctx, tf) => tf.Create(() => new ObjectType(
+                        "config",
+                        new Dictionary<string, ObjectTypeProperty>
+                        {
+                            ["requiredSecureString"] = new(ctx.CoreSecureStringTypeRef, ObjectTypePropertyFlags.Required, null)
+                        },
+                        null))
+                });
+
+        private static MockExtensionData CreateMockExtWithDiscriminatedConfigType(string extName = "configdiscrimobj") =>
             ExtensionTestHelper.CreateMockExtensionMockData(
                 extName, "1.2.3", "v1", new CustomExtensionTypeFactoryDelegates
                 {

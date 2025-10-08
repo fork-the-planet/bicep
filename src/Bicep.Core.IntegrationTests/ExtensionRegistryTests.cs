@@ -3,6 +3,7 @@
 
 using System.IO.Abstractions.TestingHelpers;
 using Bicep.Core.Diagnostics;
+using Bicep.Core.Extensions;
 using Bicep.Core.FileSystem;
 using Bicep.Core.Registry.Extensions;
 using Bicep.Core.UnitTests;
@@ -128,7 +129,7 @@ public class ExtensionRegistryTests : TestBase
 
 
         var compiler = services.Build().GetCompiler();
-        var compilation = await compiler.CreateCompilation(bicepUri);
+        var compilation = await compiler.CreateCompilation(bicepUri.ToIOUri());
 
         var result = CompilationHelper.GetCompilationResult(compilation);
 
@@ -388,13 +389,13 @@ extension 'br:example.azurecr.io/test/extension/http:1.2.3'
         result.Template.Should().DeepEqual(JToken.Parse("""
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "languageVersion": "2.1-experimental",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "dev",
-      "templateHash": "15182588323302093073"
+      "templateHash": "9550648641475979632"
     }
   },
   "imports": {
@@ -944,5 +945,29 @@ resource bazRes 'bar:fooType@v1' = {
   }
 }
 """);
+    }
+
+    [TestMethod]
+    public async Task MSGraph_extension_1_0_0_is_valid()
+    {
+        // https://github.com/Azure/bicep/issues/18158
+        var registry = "mcr.microsoft.com";
+        var repository = "bicep/extensions/microsoftgraph/v1.0";
+
+        var services = ExtensionTestHelper.GetServiceBuilder(new MockFileSystem(), registry, repository, AllFeaturesEnabled);
+        var typesTgz = new EmbeddedFile(typeof(ExtensionRegistryTests).Assembly, "Files/ExtensionTypes/msgraph-1.0.0-types.tgz");
+        await RegistryHelper.PublishExtensionToRegistryAsync(services.Build(), $"br:{registry}/{repository}:1.0.0", typesTgz.BinaryData);
+
+        var result = await CompilationHelper.RestoreAndCompile(services, """
+            param application object
+
+            extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1.0:1.0.0' as microsoftGraphV1_0
+
+            resource ownerUsers 'Microsoft.Graph/users@v1.0' existing = [for (owner, i) in application.owners: {
+              userPrincipalName: owner.upn
+            }]
+            """);
+
+        result.Should().NotHaveAnyCompilationBlockingDiagnostics();
     }
 }

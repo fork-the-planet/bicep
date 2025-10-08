@@ -12,11 +12,12 @@ using Azure.Deployments.Extensibility.Contract;
 using Azure.Deployments.Extensibility.Core.V2.Models;
 using Azure.Deployments.Extensibility.Data;
 using Azure.Deployments.Extensibility.Messages;
+using Bicep.Core.AzureApi;
 using Bicep.Core.Configuration;
-using Bicep.Core.Registry.Auth;
+using Bicep.Core.Extensions;
 using Bicep.Local.Deploy.Azure;
 using Bicep.Local.Deploy.Engine;
-using Google.Protobuf.WellKnownTypes;
+using Bicep.Local.Deploy.Types;
 using Json.More;
 using Json.Pointer;
 using Microsoft.WindowsAzure.ResourceStack.Common.Algorithms;
@@ -113,7 +114,7 @@ internal class NestedDeploymentExtension(
             try
             {
                 GuardHelper.ArgumentNotNull(identifiers.SourceUri);
-                var configuration = configurationManager.GetConfiguration(new Uri(identifiers.SourceUri));
+                var configuration = configurationManager.GetConfiguration(new Uri(identifiers.SourceUri).ToIOUri());
                 DeploymentLocator locator = new("", null, identifiers.SubscriptionId, identifiers.ResourceGroup, identifiers.Name);
 
                 await armDeploymentProvider.StartDeployment(configuration, locator, template, parameters.ToJsonString(), cancellationToken);
@@ -148,7 +149,7 @@ internal class NestedDeploymentExtension(
             try
             {
                 GuardHelper.ArgumentNotNull(identifiers.SourceUri);
-                var configuration = configurationManager.GetConfiguration(new Uri(identifiers.SourceUri));
+                var configuration = configurationManager.GetConfiguration(new Uri(identifiers.SourceUri).ToIOUri());
                 DeploymentLocator locator = new("", null, identifiers.SubscriptionId, identifiers.ResourceGroup, identifiers.Name);
 
                 var result = await armDeploymentProvider.CheckDeployment(configuration, locator, cancellationToken);
@@ -192,4 +193,7 @@ internal class NestedDeploymentExtension(
 
     public ValueTask DisposeAsync()
         => ValueTask.CompletedTask;
+
+    public Task<TypeFiles> GetTypeFiles(CancellationToken cancellationToken)
+        => throw new InvalidOperationException($"Extension {nameof(NestedDeploymentExtension)} does not support type files.");
 }

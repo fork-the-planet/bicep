@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using Bicep.Core.Analyzers.Interfaces;
 using Bicep.Core.Configuration;
 using Bicep.Core.Features;
-using Bicep.Core.FileSystem;
 using Bicep.Core.Registry;
 using Bicep.Core.Semantics;
 using Bicep.Core.Semantics.Namespaces;
@@ -47,7 +46,7 @@ namespace Bicep.LanguageServer.Providers
         }
 
         public CompilationContext Create(
-            IReadOnlyWorkspace workspace,
+            IActiveSourceFileLookup workspace,
             DocumentUri documentUri,
             ImmutableDictionary<ISourceFile, ISemanticModel> modelLookup)
         {
@@ -56,12 +55,12 @@ namespace Bicep.LanguageServer.Providers
                 moduleDispatcher,
                 workspace,
                 sourceFileFactory,
-                documentUri.ToUriEncoded());
+                documentUri.ToIOUri());
             return this.CreateContext(sourceFileGrouping, modelLookup);
         }
 
         public CompilationContext Update(
-            IReadOnlyWorkspace workspace,
+            IActiveSourceFileLookup workspace,
             CompilationContext current,
             ImmutableDictionary<ISourceFile, ISemanticModel> modelLookup)
         {

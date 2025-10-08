@@ -17,5 +17,10 @@ namespace Bicep.Core.SourceGraph
         /// also set values of the parameters declared in the referenced Bicep file.
         /// </summary>
         ParamsFile,
+
+        /// <summary>
+        /// A Bicep file used in the REPL environment.
+        /// </summary>
+        ReplFile
     }
 }

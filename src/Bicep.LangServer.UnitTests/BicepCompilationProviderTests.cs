@@ -27,8 +27,8 @@ namespace Bicep.LangServer.UnitTests
                 .AddSingleton<BicepCompilationProvider>());
 
             var sourceFileFactory = services.Construct<ISourceFileFactory>();
-            var sourceFile = sourceFileFactory.CreateBicepFile(fileUri.ToUriEncoded(), DataSets.Parameters_LF.Bicep);
-            var workspace = new Workspace();
+            var sourceFile = sourceFileFactory.CreateBicepFile(fileUri.ToUriEncoded().ToIOUri(), DataSets.Parameters_LF.Bicep);
+            var workspace = new ActiveSourceFileSet();
             workspace.UpsertSourceFile(sourceFile);
 
             var provider = services.Construct<BicepCompilationProvider>();

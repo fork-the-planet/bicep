@@ -53,10 +53,10 @@ public class BuildParamsCommand(
         return CommandHelper.GetExitCode(summary);
     }
 
-    private async Task<DiagnosticSummary> Compile(Workspace? workspace, IOUri inputUri, IOUri? bicepFileUri, IOUri outputUri, bool noRestore, DiagnosticsFormat? diagnosticsFormat, bool outputToStdOut)
+    private async Task<DiagnosticSummary> Compile(ActiveSourceFileSet? workspace, IOUri inputUri, IOUri? bicepFileUri, IOUri outputUri, bool noRestore, DiagnosticsFormat? diagnosticsFormat, bool outputToStdOut)
     {
         var compilation = await compiler.CreateCompilation(
-            inputUri.ToUri(),
+            inputUri,
             workspace,
             skipRestore: noRestore);
 
@@ -95,7 +95,7 @@ public class BuildParamsCommand(
         return new(hasErrors);
     }
 
-    private async Task<Workspace?> CreateWorkspaceWithParameterOverridesIfPresent(IOUri paramsFileUri)
+    private async Task<ActiveSourceFileSet?> CreateWorkspaceWithParameterOverridesIfPresent(IOUri paramsFileUri)
     {
         var parameterOverridesJson = environment.GetVariable("BICEP_PARAMETERS_OVERRIDES");
 
@@ -116,7 +116,7 @@ public class BuildParamsCommand(
             return null;
         }
 
-        var sourceFile = sourceFileFactory.CreateBicepParamFile(paramsFileUri.ToUri(), paramsFileText);
+        var sourceFile = sourceFileFactory.CreateBicepParamFile(paramsFileUri, paramsFileText);
         var parameterOverrides = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(parameterOverridesJson, new JsonSerializerSettings()
         {
             DateParseHandling = DateParseHandling.None,
@@ -129,7 +129,7 @@ public class BuildParamsCommand(
 
         sourceFile = ParamsFileHelper.ApplyParameterOverrides(sourceFileFactory, sourceFile, parameterOverrides);
 
-        var workspace = new Workspace();
+        var workspace = new ActiveSourceFileSet();
         workspace.UpsertSourceFile(sourceFile);
 
         return workspace;

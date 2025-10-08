@@ -245,7 +245,7 @@ namespace Bicep.LangServer.UnitTests.Configuration
                 bicepConfigFilePath = null;
             }
 
-            var workspace = new Workspace();
+            var workspace = new ActiveSourceFileSet();
             var fileExplorer = new FileSystemFileExplorer(mockFileSystem);
             var configurationManager = new ConfigurationManager(fileExplorer);
             var sourceFileFactory = new SourceFileFactory(configurationManager, BicepTestConstants.FeatureProviderFactory, BicepTestConstants.AuxiliaryFileCache, BicepTestConstants.FileExplorer);
@@ -256,7 +256,6 @@ namespace Bicep.LangServer.UnitTests.Configuration
                 BicepCompilationManagerHelper.CreateMockScheduler().Object,
                 BicepTestConstants.CreateMockTelemetryProvider().Object,
                 new LinterRulesProvider(),
-                BicepTestConstants.FileResolver,
                 sourceFileFactory,
                 BicepTestConstants.AuxiliaryFileCache);
             bicepCompilationManager.OpenCompilation(DocumentUri.From(InMemoryFileResolver.GetFileUri(bicepFilePath)), null, bicepFileContents, LanguageConstants.LanguageId);

@@ -8,7 +8,6 @@ using Bicep.Cli.Helpers.Snapshot;
 using Bicep.Core;
 using Bicep.Core.Emit;
 using Bicep.Core.Extensions;
-using Bicep.Core.FileSystem;
 using Bicep.Core.Navigation;
 using Bicep.Core.PrettyPrint;
 using Bicep.Core.PrettyPrintV2;
@@ -79,9 +78,9 @@ public class CliJsonRpcServer : ICliJsonRpcProtocol
 
         paramFile = ParamsFileHelper.ApplyParameterOverrides(compilation.SourceFileFactory, paramFile, request.ParameterOverrides);
 
-        var workspace = new Workspace();
+        var workspace = new ActiveSourceFileSet();
         workspace.UpsertSourceFile(paramFile);
-        compilation = await compiler.CreateCompilation(paramFile.Uri, workspace);
+        compilation = await compiler.CreateCompilation(paramFile.FileHandle.Uri, workspace);
         var paramsResult = compilation.Emitter.Parameters();
 
         return new(
@@ -111,7 +110,7 @@ public class CliJsonRpcServer : ICliJsonRpcProtocol
         }
 
         return new(
-            [.. fileUris.Select(x => x.GetLocalFilePath()).OrderBy(x => x)]);
+            [.. fileUris.Select(x => x.GetFilePath()).OrderBy(x => x)]);
     }
 
     /// <inheritdoc/>
@@ -281,7 +280,7 @@ public class CliJsonRpcServer : ICliJsonRpcProtocol
             throw new InvalidOperationException($"Invalid file path: {fileUri}");
         }
 
-        var compilation = await compiler.CreateCompilation(fileUri.ToUri());
+        var compilation = await compiler.CreateCompilation(fileUri);
 
         return compilation;
     }

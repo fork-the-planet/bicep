@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Bicep.Cli.Helpers;
-using Bicep.Core.FileSystem;
 using Bicep.IO.Abstraction;
 using LanguageConstants = Bicep.Core.LanguageConstants;
 
@@ -77,16 +76,6 @@ namespace Bicep.Cli.Arguments
             if (OutputDir is not null && OutputFile is not null)
             {
                 throw new CommandLineException($"The --outdir and --outfile parameters cannot both be used");
-            }
-
-            if (!OutputToStdOut && !AllowOverwrite)
-            {
-                string outputFilePath = Path.ChangeExtension(PathHelper.ResolvePath(InputFile), LanguageConstants.ParamsFileExtension);
-                if (File.Exists(outputFilePath))
-                {
-                    throw new CommandLineException($"The output path \"{outputFilePath}\" already exists. Use --force to overwrite the existing file.");
-                }
-
             }
         }
 

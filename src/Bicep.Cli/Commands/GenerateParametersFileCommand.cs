@@ -7,7 +7,6 @@ using Bicep.Cli.Logging;
 using Bicep.Cli.Services;
 using Bicep.Core;
 using Bicep.Core.Features;
-using Bicep.Core.FileSystem;
 using Bicep.IO.Abstraction;
 using Microsoft.Extensions.Logging;
 
@@ -43,7 +42,7 @@ namespace Bicep.Cli.Commands
             var (inputUri, outputUri) = this.inputOutputArgumentsResolver.ResolveInputOutputArguments(args);
             ArgumentHelper.ValidateBicepFile(inputUri);
 
-            var compilation = await compiler.CreateCompilation(inputUri.ToUri(), forceRestore: args.NoRestore);
+            var compilation = await compiler.CreateCompilation(inputUri, forceRestore: args.NoRestore);
             CommandHelper.LogExperimentalWarning(logger, compilation);
 
             var summary = diagnosticLogger.LogDiagnostics(DiagnosticOptions.Default, compilation);

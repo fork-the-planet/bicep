@@ -23,7 +23,6 @@ using Bicep.Core;
 using Bicep.Core.Diagnostics;
 using Bicep.Core.Emit;
 using Bicep.Core.Extensions;
-using Bicep.Core.FileSystem;
 using Bicep.Core.Json;
 using Bicep.Core.TypeSystem;
 using Bicep.IO.Abstraction;
@@ -62,7 +61,7 @@ public class SnapshotCommand(
             }
         }
 
-        var outputUri =  inputUri.WithExtension(".snapshot.json");
+        var outputUri = inputUri.WithExtension(".snapshot.json");
         switch (snapshotMode)
         {
             case SnapshotArguments.SnapshotMode.Overwrite:
@@ -90,7 +89,7 @@ public class SnapshotCommand(
 
     private async Task<Snapshot?> GetSnapshot(SnapshotArguments arguments, IOUri inputUri, bool noRestore, CancellationToken cancellationToken)
     {
-        var compilation = await compiler.CreateCompilation(inputUri.ToUri(), skipRestore: noRestore);
+        var compilation = await compiler.CreateCompilation(inputUri, skipRestore: noRestore);
         CommandHelper.LogExperimentalWarning(logger, compilation);
 
         var summary = diagnosticLogger.LogDiagnostics(DiagnosticOptions.Default, compilation);
@@ -132,7 +131,7 @@ public class SnapshotCommand(
         if (!file.TryReadAllText().IsSuccess(out var contents, out var failureBuilder))
         {
             var message = failureBuilder(DiagnosticBuilder.ForDocumentStart()).Message;
-            throw new CommandLineException($"Error opening file {uri.GetLocalFilePath()}: {message}.");
+            throw new CommandLineException($"Error opening file {uri.GetFilePath()}: {message}.");
         }
 
         return SnapshotHelper.Deserialize(contents);

@@ -1,13 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.IO.Abstractions;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources.Mocking;
 using Bicep.Core.Analyzers.Interfaces;
 using Bicep.Core.Analyzers.Linter;
+using Bicep.Core.AzureApi;
 using Bicep.Core.Configuration;
 using Bicep.Core.Features;
 using Bicep.Core.FileSystem;
 using Bicep.Core.Registry;
-using Bicep.Core.Registry.Auth;
 using Bicep.Core.Registry.Catalog.Implementation;
 using Bicep.Core.Semantics.Namespaces;
 using Bicep.Core.SourceGraph;
@@ -16,6 +19,7 @@ using Bicep.Core.TypeSystem.Providers.Az;
 using Bicep.Core.TypeSystem.Types;
 using Bicep.Core.UnitTests.Configuration;
 using Bicep.Core.UnitTests.Features;
+using Bicep.Core.UnitTests.Mock;
 using Bicep.Core.UnitTests.Mock.Registry;
 using Bicep.Core.UnitTests.Mock.Registry.Catalog;
 using Bicep.Core.UnitTests.Utils;
@@ -27,6 +31,7 @@ using Bicep.LanguageServer.CompilationManager;
 using Bicep.LanguageServer.Deploy;
 using Bicep.LanguageServer.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using LocalFileSystem = System.IO.Abstractions.FileSystem;
 
 namespace Bicep.Core.UnitTests;
@@ -40,10 +45,10 @@ public static class IServiceCollectionExtensions
             .AddSingleton<IResourceTypeProviderFactory, ResourceTypeProviderFactory>()
             .AddSingleton<IContainerRegistryClientFactory, ContainerRegistryClientFactory>()
             .AddSingleton<ITemplateSpecRepositoryFactory, TemplateSpecRepositoryFactory>()
+            .AddSingleton<IArmClientProvider, ArmClientProvider>()
             .AddSingleton<IModuleDispatcher, ModuleDispatcher>()
             .AddSingleton<IArtifactRegistryProvider, DefaultArtifactRegistryProvider>()
             .AddSingleton<ITokenCredentialFactory, TokenCredentialFactory>()
-            .AddSingleton<IFileResolver, FileResolver>()
             .AddSingleton<IEnvironment>(TestEnvironment.Default)
             .AddSingleton<IFileSystem, LocalFileSystem>()
             .AddSingleton<IFileExplorer, FileSystemFileExplorer>()
@@ -68,9 +73,6 @@ public static class IServiceCollectionExtensions
         where TService : class
         => services.AddSingleton(service);
 
-    public static IServiceCollection WithFileResolver(this IServiceCollection services, IFileResolver fileResolver)
-        => Register(services, fileResolver);
-
     public static IServiceCollection WithFileExplorer(this IServiceCollection services, IFileExplorer fileExplorer)
         => Register(services, fileExplorer);
 
@@ -83,7 +85,7 @@ public static class IServiceCollectionExtensions
     public static IServiceCollection WithTemplateSpecRepositoryFactory(this IServiceCollection services, ITemplateSpecRepositoryFactory factory)
         => Register(services, factory);
 
-    public static IServiceCollection WithWorkspace(this IServiceCollection services, IWorkspace workspace)
+    public static IServiceCollection WithWorkspace(this IServiceCollection services, IActiveSourceFileSet workspace)
         => Register(services, workspace);
 
     public static IServiceCollection WithFeatureOverrides(this IServiceCollection services, FeatureProviderOverrides overrides)
@@ -182,5 +184,25 @@ public static class IServiceCollectionExtensions
         }
 
         return services;
+    }
+
+    public static IServiceCollection AddMockArmClient(this IServiceCollection services, MockableResourcesArmClient armClient)
+        => AddMockArmClient(services, _ => armClient);
+
+    public static IServiceCollection AddMockArmClient(this IServiceCollection services, Func<RootConfiguration, MockableResourcesArmClient> armClient)
+    {
+        var clientProvider = StrictMock.Of<IArmClientProvider>();
+        clientProvider.Setup(x => x.CreateArmClient(It.IsAny<RootConfiguration>(), It.IsAny<string?>()))
+            .Returns<RootConfiguration, string?>((config, _) =>
+            {
+                var clientMock = StrictMock.Of<ArmClient>();
+
+                clientMock.Setup(x => x.GetCachedClient(It.IsAny<Func<ArmClient, MockableResourcesArmClient>>()))
+                    .Returns(armClient(config));
+
+                return clientMock.Object;
+            });
+
+        return services.AddSingleton(clientProvider.Object);
     }
 }

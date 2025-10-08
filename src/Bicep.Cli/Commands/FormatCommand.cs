@@ -8,7 +8,6 @@ using Bicep.Core.Configuration;
 using Bicep.Core.Diagnostics;
 using Bicep.Core.Extensions;
 using Bicep.Core.Features;
-using Bicep.Core.FileSystem;
 using Bicep.Core.Parsing;
 using Bicep.Core.PrettyPrint;
 using Bicep.Core.PrettyPrintV2;
@@ -45,7 +44,7 @@ public class FormatCommand(
             throw new DiagnosticException(diagnostic);
         }
 
-        if (sourceFileFactory.CreateSourceFile(inputUri.ToUri(), fileContents) is not BicepSourceFile sourceFile)
+        if (sourceFileFactory.CreateSourceFile(inputUri, fileContents) is not BicepSourceFile sourceFile)
         {
             throw new InvalidOperationException("Unable to create Bicep source file.");
         }

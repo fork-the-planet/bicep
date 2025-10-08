@@ -28,6 +28,19 @@ param boolParam1 bool
 // END: Parameters
 //@[018:022) NewLine |\r\n\r\n|
 
+// BEGIN: Variables
+//@[019:023) NewLine |\r\n\r\n|
+
+var strVar1 = 'strVar1Value'
+//@[000:003) Identifier |var|
+//@[004:011) Identifier |strVar1|
+//@[012:013) Assignment |=|
+//@[014:028) StringComplete |'strVar1Value'|
+//@[028:032) NewLine |\r\n\r\n|
+
+// END: Variables
+//@[017:021) NewLine |\r\n\r\n|
+
 // BEGIN: Extension declarations
 //@[032:036) NewLine |\r\n\r\n|
 
@@ -40,10 +53,19 @@ extension kubernetes as k8s
 //@[010:020) Identifier |kubernetes|
 //@[021:023) Identifier |as|
 //@[024:027) Identifier |k8s|
-//@[027:031) NewLine |\r\n\r\n|
-
-//extension 'br:mcr.microsoft.com/bicep/extensions/microsoftgraph/v1:1.2.3' as graph
-//@[084:088) NewLine |\r\n\r\n|
+//@[027:029) NewLine |\r\n|
+extension 'br:mcr.microsoft.com/bicep/extensions/hasoptionalconfig/v1:1.2.3' as extWithOptionalConfig1
+//@[000:009) Identifier |extension|
+//@[010:076) StringComplete |'br:mcr.microsoft.com/bicep/extensions/hasoptionalconfig/v1:1.2.3'|
+//@[077:079) Identifier |as|
+//@[080:102) Identifier |extWithOptionalConfig1|
+//@[102:104) NewLine |\r\n|
+extension 'br:mcr.microsoft.com/bicep/extensions/hasoptionalconfig/v1:1.2.3' as extWithOptionalConfig2
+//@[000:009) Identifier |extension|
+//@[010:076) StringComplete |'br:mcr.microsoft.com/bicep/extensions/hasoptionalconfig/v1:1.2.3'|
+//@[077:079) Identifier |as|
+//@[080:102) Identifier |extWithOptionalConfig2|
+//@[102:106) NewLine |\r\n\r\n|
 
 // END: Extension declarations
 //@[030:034) NewLine |\r\n\r\n|
@@ -163,11 +185,6 @@ module moduleWithExtsWithAliases 'child/hasConfigurableExtensionsWithAlias.bicep
 //@[082:083) Assignment |=|
 //@[084:085) LeftBrace |{|
 //@[085:087) NewLine |\r\n|
-  name: 'moduleWithExtsWithAliases'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:035) StringComplete |'moduleWithExtsWithAliases'|
-//@[035:037) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -205,11 +222,6 @@ module moduleWithExtsWithoutAliases 'child/hasConfigurableExtensionsWithoutAlias
 //@[088:089) Assignment |=|
 //@[090:091) LeftBrace |{|
 //@[091:093) NewLine |\r\n|
-  name: 'moduleWithExtsWithoutAliases'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:038) StringComplete |'moduleWithExtsWithoutAliases'|
-//@[038:040) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -242,11 +254,6 @@ module moduleExtConfigsFromParams 'child/hasConfigurableExtensionsWithAlias.bice
 //@[083:084) Assignment |=|
 //@[085:086) LeftBrace |{|
 //@[086:088) NewLine |\r\n|
-  name: 'moduleExtConfigsFromParams'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:036) StringComplete |'moduleExtConfigsFromParams'|
-//@[036:038) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -292,11 +299,6 @@ module moduleExtConfigFromKeyVaultReference 'child/hasConfigurableExtensionsWith
 //@[093:094) Assignment |=|
 //@[095:096) LeftBrace |{|
 //@[096:098) NewLine |\r\n|
-  name: 'moduleExtConfigKeyVaultReference'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:042) StringComplete |'moduleExtConfigKeyVaultReference'|
-//@[042:044) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -317,11 +319,11 @@ module moduleExtConfigFromKeyVaultReference 'child/hasConfigurableExtensionsWith
 //@[032:046) StringComplete |'myKubeConfig'|
 //@[046:047) RightParen |)|
 //@[047:049) NewLine |\r\n|
-      namespace: 'default'
+      namespace: strVar1
 //@[006:015) Identifier |namespace|
 //@[015:016) Colon |:|
-//@[017:026) StringComplete |'default'|
-//@[026:028) NewLine |\r\n|
+//@[017:024) Identifier |strVar1|
+//@[024:026) NewLine |\r\n|
     }
 //@[004:005) RightBrace |}|
 //@[005:007) NewLine |\r\n|
@@ -339,11 +341,6 @@ module moduleExtConfigFromReferences 'child/hasConfigurableExtensionsWithAlias.b
 //@[086:087) Assignment |=|
 //@[088:089) LeftBrace |{|
 //@[089:091) NewLine |\r\n|
-  name: 'moduleExtConfigFromReferences'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:039) StringComplete |'moduleExtConfigFromReferences'|
-//@[039:041) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -396,11 +393,6 @@ module moduleWithExtsUsingFullInheritance 'child/hasConfigurableExtensionsWithAl
 //@[091:092) Assignment |=|
 //@[093:094) LeftBrace |{|
 //@[094:096) NewLine |\r\n|
-  name: 'moduleWithExtsFullInheritance'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:039) StringComplete |'moduleWithExtsFullInheritance'|
-//@[039:041) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -420,6 +412,45 @@ module moduleWithExtsUsingFullInheritance 'child/hasConfigurableExtensionsWithAl
 //@[000:001) RightBrace |}|
 //@[001:005) NewLine |\r\n\r\n|
 
+module moduleWithExtsUsingFullInheritanceTernary1 'child/hasConfigurableExtensionsWithAlias.bicep' = {
+//@[000:006) Identifier |module|
+//@[007:049) Identifier |moduleWithExtsUsingFullInheritanceTernary1|
+//@[050:098) StringComplete |'child/hasConfigurableExtensionsWithAlias.bicep'|
+//@[099:100) Assignment |=|
+//@[101:102) LeftBrace |{|
+//@[102:104) NewLine |\r\n|
+  extensionConfigs: {
+//@[002:018) Identifier |extensionConfigs|
+//@[018:019) Colon |:|
+//@[020:021) LeftBrace |{|
+//@[021:023) NewLine |\r\n|
+    k8s: k8s.config
+//@[004:007) Identifier |k8s|
+//@[007:008) Colon |:|
+//@[009:012) Identifier |k8s|
+//@[012:013) Dot |.|
+//@[013:019) Identifier |config|
+//@[019:021) NewLine |\r\n|
+    extWithOptionalConfig: boolParam1 ? extWithOptionalConfig1.config : extWithOptionalConfig2.config
+//@[004:025) Identifier |extWithOptionalConfig|
+//@[025:026) Colon |:|
+//@[027:037) Identifier |boolParam1|
+//@[038:039) Question |?|
+//@[040:062) Identifier |extWithOptionalConfig1|
+//@[062:063) Dot |.|
+//@[063:069) Identifier |config|
+//@[070:071) Colon |:|
+//@[072:094) Identifier |extWithOptionalConfig2|
+//@[094:095) Dot |.|
+//@[095:101) Identifier |config|
+//@[101:103) NewLine |\r\n|
+  }
+//@[002:003) RightBrace |}|
+//@[003:005) NewLine |\r\n|
+}
+//@[000:001) RightBrace |}|
+//@[001:005) NewLine |\r\n\r\n|
+
 module moduleWithExtsUsingPiecemealInheritance 'child/hasConfigurableExtensionsWithAlias.bicep' = {
 //@[000:006) Identifier |module|
 //@[007:046) Identifier |moduleWithExtsUsingPiecemealInheritance|
@@ -427,11 +458,6 @@ module moduleWithExtsUsingPiecemealInheritance 'child/hasConfigurableExtensionsW
 //@[096:097) Assignment |=|
 //@[098:099) LeftBrace |{|
 //@[099:101) NewLine |\r\n|
-  name: 'moduleWithExtsPiecemealInheritance'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:044) StringComplete |'moduleWithExtsPiecemealInheritance'|
-//@[044:046) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -541,11 +567,6 @@ module moduleExtConfigsConditionalMixed 'child/hasConfigurableExtensionsWithAlia
 //@[089:090) Assignment |=|
 //@[091:092) LeftBrace |{|
 //@[092:094) NewLine |\r\n|
-  name: 'moduleExtConfigsConditionalMixedValueAndInheritance'
-//@[002:006) Identifier |name|
-//@[006:007) Colon |:|
-//@[008:061) StringComplete |'moduleExtConfigsConditionalMixedValueAndInheritance'|
-//@[061:063) NewLine |\r\n|
   extensionConfigs: {
 //@[002:018) Identifier |extensionConfigs|
 //@[018:019) Colon |:|
@@ -591,6 +612,38 @@ module moduleExtConfigsConditionalMixed 'child/hasConfigurableExtensionsWithAlia
     }
 //@[004:005) RightBrace |}|
 //@[005:007) NewLine |\r\n|
+  }
+//@[002:003) RightBrace |}|
+//@[003:005) NewLine |\r\n|
+}
+//@[000:001) RightBrace |}|
+//@[001:005) NewLine |\r\n\r\n|
+
+module moduleWithExtsEmpty 'child/hasConfigurableExtensionsWithAlias.bicep' = {
+//@[000:006) Identifier |module|
+//@[007:026) Identifier |moduleWithExtsEmpty|
+//@[027:075) StringComplete |'child/hasConfigurableExtensionsWithAlias.bicep'|
+//@[076:077) Assignment |=|
+//@[078:079) LeftBrace |{|
+//@[079:081) NewLine |\r\n|
+  extensionConfigs: {
+//@[002:018) Identifier |extensionConfigs|
+//@[018:019) Colon |:|
+//@[020:021) LeftBrace |{|
+//@[021:023) NewLine |\r\n|
+    k8s: k8s.config
+//@[004:007) Identifier |k8s|
+//@[007:008) Colon |:|
+//@[009:012) Identifier |k8s|
+//@[012:013) Dot |.|
+//@[013:019) Identifier |config|
+//@[019:021) NewLine |\r\n|
+    extWithOptionalConfig: {}
+//@[004:025) Identifier |extWithOptionalConfig|
+//@[025:026) Colon |:|
+//@[027:028) LeftBrace |{|
+//@[028:029) RightBrace |}|
+//@[029:031) NewLine |\r\n|
   }
 //@[002:003) RightBrace |}|
 //@[003:005) NewLine |\r\n|

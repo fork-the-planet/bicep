@@ -132,7 +132,7 @@ public class InputOutputArgumentsResolverTests
 
         // Assert
         result.Should().NotBeNull();
-        result.IsLocalFile.Should().BeTrue();
+        result.IsFile.Should().BeTrue();
         mockPath.Verify(p => p.GetFullPath(windowsPath), Times.Once);
     }
 #endif
@@ -148,7 +148,7 @@ public class InputOutputArgumentsResolverTests
         var mockPath = StrictMock.Of<IPath>();
         mockFileSystem.Setup(fs => fs.Path).Returns(mockPath.Object);
         mockPath.Setup(p => p.GetFullPath(It.IsAny<string>())).Returns((string p) => Path.GetFullPath(p));
-        
+
         var resolver = new InputOutputArgumentsResolver(mockFileSystem.Object);
 
         // Act
@@ -156,7 +156,7 @@ public class InputOutputArgumentsResolverTests
 
         // Assert
         result.Should().NotBeNull();
-        result.IsLocalFile.Should().BeTrue();
+        result.IsFile.Should().BeTrue();
         mockPath.Verify(p => p.GetFullPath(path), Times.Once);
     }
 }

@@ -38,15 +38,11 @@ namespace Bicep.Core.Features
 
         public static readonly bool TracingEnabled = ReadBooleanEnvVar("BICEP_TRACING_ENABLED", defaultValue: false);
 
-        public static readonly bool ExtensionTracingEnabled = ReadBooleanEnvVar("BICEP_EXTENSION_TRACING_ENABLED", defaultValue: false);
-
         public static readonly TraceVerbosity TracingVerbosity = ReadEnumEnvVar("BICEP_TRACING_VERBOSITY", TraceVerbosity.Basic);
 
         public static bool HasTracingVerbosity(TraceVerbosity verbosity) => TracingVerbosity >= verbosity;
 
         public bool WaitAndRetryEnabled => configuration.ExperimentalFeaturesEnabled.WaitAndRetry;
-
-        public bool OnlyIfNotExistsEnabled => configuration.ExperimentalFeaturesEnabled.OnlyIfNotExists;
 
         public bool LocalDeployEnabled => configuration.ExperimentalFeaturesEnabled.LocalDeploy;
 
@@ -56,7 +52,9 @@ namespace Bicep.Core.Features
 
         public bool DesiredStateConfigurationEnabled => configuration.ExperimentalFeaturesEnabled.DesiredStateConfiguration;
 
-        public bool ModuleIdentityEnabled => configuration.ExperimentalFeaturesEnabled.ModuleIdentity;
+        public bool UserDefinedConstraintsEnabled => configuration.ExperimentalFeaturesEnabled.UserDefinedConstraints;
+
+        public bool DeployCommandsEnabled => configuration.ExperimentalFeaturesEnabled.DeployCommands;
 
         private static bool ReadBooleanEnvVar(string envVar, bool defaultValue)
             => bool.TryParse(Environment.GetEnvironmentVariable(envVar), out var value) ? value : defaultValue;
@@ -76,6 +74,6 @@ namespace Bicep.Core.Features
                 : customPath);
 
         private IDirectoryHandle GetCacheRootDirectoryFromLocalPath(string localPath) =>
-            this.fileExplorer.GetDirectory(IOUri.FromLocalFilePath(localPath));
+            this.fileExplorer.GetDirectory(IOUri.FromFilePath(localPath));
     }
 }

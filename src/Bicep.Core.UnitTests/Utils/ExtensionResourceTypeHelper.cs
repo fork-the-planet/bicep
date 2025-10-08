@@ -38,11 +38,10 @@ public static class ExtensionResourceTypeHelper
 
         var requestType = factory.Create(() => new ResourceType(
             "request@v1",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(requestBodyType),
-            ResourceFlags.None,
-            null));
+            null,
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var settings = new TypeSettings(
             name: "http",
@@ -99,14 +98,13 @@ public static class ExtensionResourceTypeHelper
 
         var fooType = factory.Create(() => new ResourceType(
             "fooType@v1",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(fooBodyType),
-            ResourceFlags.None,
             new Dictionary<string, ResourceTypeFunction>
             {
                 ["convertBarToBaz"] = new(factory.GetReference(barFunctionType), "Converts a bar into a baz!")
-            }));
+            },
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var settings = new TypeSettings(name: "ThirdPartyExtension", version: "1.0.0", isSingleton: false, configurationType: null!);
 
@@ -142,14 +140,13 @@ public static class ExtensionResourceTypeHelper
 
         var fooType = factory.Create(() => new ResourceType(
             "fooType@v1",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(fooBodyType),
-            ResourceFlags.None,
             new Dictionary<string, ResourceTypeFunction>
             {
                 ["convertBarToBaz"] = new(factory.GetReference(barFunctionType), "Converts a bar into a baz!")
-            }));
+            },
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         //setup fallback resource
         var fallbackBodyType = rootFactory.Create(() => new ObjectType("fallback body", new Dictionary<string, ObjectTypeProperty>
@@ -159,11 +156,10 @@ public static class ExtensionResourceTypeHelper
 
         var fallbackType = rootFactory.Create(() => new ResourceType(
             "fallback",
-            ScopeType.Unknown,
-            null,
             rootFactory.GetReference(fallbackBodyType),
-            ResourceFlags.None,
-            null));
+            null,
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var fallbackResource = new CrossFileTypeReference("types.json", rootFactory.GetIndex(fallbackType));
 
@@ -210,11 +206,10 @@ public static class ExtensionResourceTypeHelper
 
         var awsBucketsType = factory.Create(() => new ResourceType(
             "AWS.S3/Bucket@default",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(awsBucketsBodyType),
-            ResourceFlags.None,
-            null));
+            null,
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var environmentsBodyType = factory.Create(() => new ObjectType("body", new Dictionary<string, ObjectTypeProperty>
         {
@@ -224,11 +219,10 @@ public static class ExtensionResourceTypeHelper
 
         var environmentsType = factory.Create(() => new ResourceType(
             "Applications.Core/environments@2023-10-01-preview",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(environmentsBodyType),
-            ResourceFlags.None,
-            null));
+            null,
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var applicationsBodyType = factory.Create(() => new ObjectType("body", new Dictionary<string, ObjectTypeProperty>
         {
@@ -238,11 +232,10 @@ public static class ExtensionResourceTypeHelper
 
         var applicationsType = factory.Create(() => new ResourceType(
             "Applications.Core/applications@2023-10-01-preview",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(applicationsBodyType),
-            ResourceFlags.None,
-            null));
+            null,
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var recipeType = factory.Create(() => new ObjectType("recipe", new Dictionary<string, ObjectTypeProperty>
         {
@@ -264,11 +257,10 @@ public static class ExtensionResourceTypeHelper
 
         var extendersType = factory.Create(() => new ResourceType(
             "Applications.Core/extenders@2023-10-01-preview",
-            ScopeType.Unknown,
-            null,
             factory.GetReference(extendersBodyType),
-            ResourceFlags.None,
-            null));
+            null,
+            writableScopes_in: ScopeType.All,
+            readableScopes_in: ScopeType.All));
 
         var settings = new TypeSettings(name: "Radius", version: "1.0.0", isSingleton: false, configurationType: null!);
 
@@ -372,6 +364,9 @@ public static class ExtensionResourceTypeHelper
 
 public record CreateCustomExtensionTypeContext(TypeFactory TypeFactory)
 {
+    public const string Tag_CoreString = nameof(String);
+    public const string Tag_CoreSecureString = $"Secure{nameof(String)}";
+
     private Dictionary<string, ITypeReference> TaggedTypes { get; } = [];
 
     public ITypeReference AddTaggedTypeRef(string tag, ITypeReference typeRef)
@@ -385,7 +380,9 @@ public record CreateCustomExtensionTypeContext(TypeFactory TypeFactory)
 
     public TType GetTaggedType<TType>(string tag) where TType : TypeBase => (TType)GetTaggedTypeRef(tag).Type;
 
-    public ITypeReference CoreStringTypeRef => GetTaggedTypeRef(nameof(String));
+    public ITypeReference CoreStringTypeRef => GetTaggedTypeRef(Tag_CoreString);
+
+    public ITypeReference CoreSecureStringTypeRef => GetTaggedTypeRef(Tag_CoreSecureString);
 
     public ITypeReference CreateTypeGetRef(Func<TypeBase> typeFn, string? tag = null)
         => TagIfSet(tag, TypeFactory.GetReference(TypeFactory.Create(typeFn)));
@@ -414,6 +411,7 @@ public record CustomExtensionTypeFactoryDelegates
 
     public static void CreateDefaultCoreTypes(CreateCustomExtensionTypeContext ctx, TypeFactory tf)
     {
-        ctx.AddTaggedTypeRef(nameof(String), tf.GetReference(tf.Create(() => new StringType())));
+        ctx.AddTaggedTypeRef(CreateCustomExtensionTypeContext.Tag_CoreString, tf.GetReference(tf.Create(() => new StringType())));
+        ctx.AddTaggedTypeRef(CreateCustomExtensionTypeContext.Tag_CoreSecureString, tf.GetReference(tf.Create(() => new StringType(sensitive: true))));
     }
 }

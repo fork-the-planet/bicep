@@ -1,6 +1,5 @@
 [![Build](https://github.com/Azure/bicep/actions/workflows/build.yml/badge.svg)](https://github.com/Azure/bicep/actions/workflows/build.yml)
 [![Test Azure CLI Integration](https://github.com/Azure/bicep/actions/workflows/test-azure-cli-integration.yml/badge.svg?branch=main)](https://github.com/Azure/bicep/actions/workflows/test-azure-cli-integration.yml)
-[![codecov](https://codecov.io/gh/Azure/bicep/branch/main/graph/badge.svg)](https://app.codecov.io/gh/Azure/bicep/tree/main)
 [![Needs Upvote](https://img.shields.io/github/issues/Azure/Bicep/Needs%3A%20Upvote?color=green&label=Needs%3A%20Upvote&style=flat)](https://github.com/Azure/bicep/issues?q=is%3Aopen+is%3Aissue+label%3A%22Needs%3A+Upvote%22+sort%3Areactions-%2B1-asc)
 [![Good First Issues](https://img.shields.io/github/issues/Azure/Bicep/good%20first%20issue?color=blue&label=good%20first%20issue&style=flat)](https://github.com/Azure/Bicep/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
@@ -42,6 +41,8 @@ Alternatively, you can use the [VS Code Devcontainer/Codespaces](https://github.
 If you have an existing ARM Template or set of resources that you would like to convert to `.bicep` format, see [Decompiling an ARM Template](https://docs.microsoft.com/azure/azure-resource-manager/bicep/decompile).
 
 Also, there is a rich library of examples in the [azure-quickstart-templates](https://github.com/Azure/azure-quickstart-templates) repo to help you get started.
+
+If you're looking for production-ready and tested Bicep templates, you can find them in the [bicep-registry-modules](https://github.com/Azure/bicep-registry-modules) repo. Learn more about these templates on the Azure Verified Modules website: [https://aka.ms/avm](https://aka.ms/avm).
 
 ## How does Bicep work?
 

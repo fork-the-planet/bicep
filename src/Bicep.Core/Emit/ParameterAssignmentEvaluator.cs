@@ -205,9 +205,24 @@ public class ParameterAssignmentEvaluator
                 catch (Exception ex)
                 {
                     return Result.For(DiagnosticBuilder.ForPosition(declaringParam.Value)
-                        .FailedToEvaluateParameter(parameter.Name, ex.Message));
+                        .FailedToEvaluateSubject("parameter", parameter.Name, ex.Message));
                 }
             });
+
+    public Result? EvaluateUsingConfig(FileSymbol file)
+    {
+        if (file.UsingDeclarationSyntax?.Config is not { } config)
+        {
+            return null;
+        }
+
+        var intermediate = converter.ConvertToIntermediateExpression(config);
+
+        var rewrittenExpression = ExternalInputExpressionRewriter
+            .Rewrite(intermediate, this.externalInputReferences);
+
+        return Result.For(rewrittenExpression);
+    }
 
     public ImmutableDictionary<string, Result> EvaluateExtensionConfigAssignment(ExtensionConfigAssignmentSymbol inputExtConfigAssignment)
         => extensionConfigAssignmentResults.GetOrAdd(
@@ -251,7 +266,7 @@ public class ParameterAssignmentEvaluator
                         {
                             propertyResult = Result.For(
                                 DiagnosticBuilder.ForPosition(property.Value)
-                                    .FailedToEvaluateParameter(extConfigAssignment.Name, ex.Message));
+                                    .FailedToEvaluateSubject("extension config", extConfigAssignment.Name, ex.Message));
                         }
                     }
 
@@ -502,8 +517,7 @@ public class ParameterAssignmentEvaluator
 
         public override Expression ReplaceFunctionCallExpression(FunctionCallExpression expression)
         {
-            if (LanguageConstants.IdentifierComparer.Equals(expression.Name, LanguageConstants.ExternalInputsArmFunctionName) &&
-                expression.SourceSyntax is FunctionCallSyntaxBase functionCallSyntax &&
+            if (expression.SourceSyntax is FunctionCallSyntaxBase functionCallSyntax &&
                 externalInputReferences.ExternalInputIndexMap.TryGetValue(functionCallSyntax, out var definitionKey))
             {
                 return new FunctionCallExpression(

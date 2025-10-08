@@ -17,6 +17,9 @@ These extensions can be combined as you wish - for example, you could:
 * Read kubernetes config using a bash script and deploy Kubernetes resources with the kubernetes extension
 * Fetch secrets from KeyVault and upload them as GitHub secrets.
 
+## Extension Quickstart
+For a .NET-based quickstart guide for creating your own extension, see [Creating a Local Extension with .NET](./local-deploy-dotnet-quickstart.md).
+
 ## How to use it?
 
 To try out a particular extension, follow the README instructions from one of sample extensions linked above.
@@ -42,7 +45,7 @@ Use one of the example repositories linked above as a starting point for creatin
 
 ### Implementation notes
 A local extension consists of the following components:
-* A binary executable which exposes the Bicep Extensibility Protocol over a [gRPC](https://grpc.io/) connection. This allows you to model interactions with your custom resource types. The gRPC contract is defined [here](../../src/Bicep.Local.Extension/extension.proto).
+* A binary executable which exposes the Bicep Extensibility Protocol over a [gRPC](https://grpc.io/) connection. This allows you to model interactions with your custom resource types. The gRPC contract is defined [here](../../src/Bicep.Local.Rpc/extension.proto).
 * Type metadata stored in a structured JSON format. This allows Bicep to understand your custom resource types for editor validation and code completion. You can use packages defined in [bicep-types](https://github.com/Azure/bicep-types) to define and generate this structured format for your own custom resource types.
 
 All extension binaries are expected to meet the following requirements:
@@ -50,7 +53,7 @@ All extension binaries are expected to meet the following requirements:
     * `--socket <socket_name>`: The path to the domain socket to connect on
     * `--pipe <pipe_name>`: The named pipe to connect on
     * `--wait-for-debugger`: Signals that you want to debug the extension, and that execution should pause until you are ready.
-1. Once started (either via domain socket or named pipe), exposes a gRPC endpoint over the relevant channel, adhereing to the [extension gRPC contract](../../src/Bicep.Local.Extension/extension.proto).
+1. Once started (either via domain socket or named pipe), exposes a gRPC endpoint over the relevant channel, adhereing to the [extension gRPC contract](../../src/Bicep.Local.Rpc/extension.proto).
 1. Responds to SIGTERM to request a graceful shutdown.
 
 For .NET applications, there is a [NuGet package](https://www.nuget.org/packages/Azure.Bicep.Local.Extension) available which abstracts most of the above implementation.
@@ -61,7 +64,6 @@ Extensions can be published using the `bicep publish-extension` CLI command grou
 The command takes the following structure:
 ```sh
 bicep publish-extension \
-  <path_to_types_index.json> \
   --bin-osx-arm64 <path_to_osx_arm64_binary> \
   --bin-linux-x64 <path_to_linux_x64_binary> \
   --bin-win-x64 <path_to_windows_x86_binary> \
@@ -69,7 +71,6 @@ bicep publish-extension \
   --force
 ```
 
-* `<path_to_types_index.json>` is the file system path to your index.json for types.
 * `--target` must be either a local file system path, or an ACR registry spec string (e.g. `br:bicepextdemo.azurecr.io/extensions/keyvault:0.1.3`).
 * `--bin-<platform>` options signifiy different os/architecture flavors that are supported. These are optional - you don't need to support all architectures. If you don't support a particular option, then your extension will fail to run on that platform. Current options are: `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`, `win-x64` and `win-arm64`.
 
@@ -104,12 +105,10 @@ Note that this can include sensitive data, and should only be used for local deb
 1. (Mac/Linux) Run the following:
    ```sh
    export BICEP_TRACING_ENABLED=true
-   export BICEP_EXTENSION_TRACING_ENABLED=true
    ```
 1. (Windows) Run the following in a PowerShell window:
    ```powershell
    $env:BICEP_TRACING_ENABLED = $true
-   $env:BICEP_EXTENSION_TRACING_ENABLED = $true
    ```
 
 ## Limitations

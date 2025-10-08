@@ -34,7 +34,7 @@ module modDTwo 'moduled.bicep' = {
   name: 'modDTwo'
   params: {
     input: modDOne.outputs.storageAccountName
-//@[011:045) [what-if-short-circuiting (Warning)] Runtime value 'modDOne.outputs.storageAccountName' will reduce the precision of what-if analysis for module 'modDTwo' (bicep core linter https://aka.ms/bicep/linter-diagnostics#what-if-short-circuiting) |modDOne.outputs.storageAccountName|
+//@[011:045) [what-if-short-circuiting (Warning)] Parameter 'input' is used as a resource identifier, API version, or condition in the module 'modDTwo'. Providing a runtime value for this parameter will lead to short-circuiting or less precise predictions in What-If. (bicep core linter https://aka.ms/bicep/linter-diagnostics#what-if-short-circuiting) |modDOne.outputs.storageAccountName|
   }
 }
 
@@ -196,13 +196,13 @@ module modAEmptyInputsWithCondition './modulea.bicep' = if (1 + 2 == 2) {
 // #completionTest(55) -> moduleATopLevelPropertyAccess
 var modulePropertyAccessCompletions = modAEmptyInputs.o
 //@[004:035) [no-unused-vars (Warning)] Variable "modulePropertyAccessCompletions" is declared but never used. (bicep core linter https://aka.ms/bicep/linter-diagnostics#no-unused-vars) |modulePropertyAccessCompletions|
-//@[054:055) [BCP053 (Error)] The type "module" does not contain property "o". Available properties include "name", "outputs". (bicep https://aka.ms/bicep/core-diagnostics#BCP053) |o|
+//@[054:055) [BCP053 (Error)] The type "module" does not contain property "o". Available properties include "identity", "name", "outputs". (bicep https://aka.ms/bicep/core-diagnostics#BCP053) |o|
 
 // #completionTest(81) -> moduleAWithConditionTopLevelPropertyAccess
 var moduleWithConditionPropertyAccessCompletions = modAEmptyInputsWithCondition.o
 //@[004:048) [no-unused-vars (Warning)] Variable "moduleWithConditionPropertyAccessCompletions" is declared but never used. (bicep core linter https://aka.ms/bicep/linter-diagnostics#no-unused-vars) |moduleWithConditionPropertyAccessCompletions|
 //@[079:081) [BCP318 (Warning)] The value of type "module | null" may be null at the start of the deployment, which would cause this access expression (and the overall deployment with it) to fail. (bicep https://aka.ms/bicep/core-diagnostics#BCP318) |.o|
-//@[080:081) [BCP053 (Error)] The type "module" does not contain property "o". Available properties include "name", "outputs". (bicep https://aka.ms/bicep/core-diagnostics#BCP053) |o|
+//@[080:081) [BCP053 (Error)] The type "module" does not contain property "o". Available properties include "identity", "name", "outputs". (bicep https://aka.ms/bicep/core-diagnostics#BCP053) |o|
 
 // #completionTest(56) -> moduleAOutputs
 var moduleOutputsCompletions = modAEmptyInputs.outputs.s
@@ -242,7 +242,7 @@ module moduleWithEmptyPath '' = {
 }
 
 module moduleWithAbsolutePath '/abc/def.bicep' = {
-//@[030:046) [BCP051 (Error)] The specified path begins with "/". Files must be referenced using relative paths. (bicep https://aka.ms/bicep/core-diagnostics#BCP051) |'/abc/def.bicep'|
+//@[030:046) [BCP051 (Error)] The specified path seems to reference an absolute path. Files must be referenced using relative paths. (bicep https://aka.ms/bicep/core-diagnostics#BCP051) |'/abc/def.bicep'|
 }
 
 module moduleWithBackslash 'child\\file.bicep' = {
@@ -769,8 +769,8 @@ module issue3000 'empty.bicep' = {
   name: 'issue3000Module'
   params: {}
   identity: {
-//@[002:010) [BCP037 (Error)] The property "identity" is not allowed on objects of type "module". Permissible properties include "dependsOn", "scope". (bicep https://aka.ms/bicep/core-diagnostics#BCP037) |identity|
     type: 'SystemAssigned'
+//@[010:026) [BCP088 (Error)] The property "type" expected a value of type "'None' | 'UserAssigned'" but the provided value is of type "'SystemAssigned'". Did you mean "'UserAssigned'"? (bicep https://aka.ms/bicep/core-diagnostics#BCP088) |'SystemAssigned'|
   }
   extendedLocation: {}
 //@[002:018) [BCP037 (Error)] The property "extendedLocation" is not allowed on objects of type "module". Permissible properties include "dependsOn", "scope". (bicep https://aka.ms/bicep/core-diagnostics#BCP037) |extendedLocation|

@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Web.Services.Description;
 using Bicep.Core.Diagnostics;
 using Bicep.Core.UnitTests;
 using Bicep.Core.UnitTests.Assertions;
-using Bicep.Core.UnitTests.Features;
 using Bicep.Core.UnitTests.Utils;
 using FluentAssertions;
 using FluentAssertions.Execution;
@@ -99,8 +99,9 @@ param fromEnv=readEnvironmentVariable('stringEnvVariable')
 ("foo.bicep", @"param fromEnv string"));
 
         result.ExcludingLinterDiagnostics().Should().HaveDiagnostics(new[]{
-                ("BCP338", DiagnosticLevel.Error,
-                "Failed to evaluate parameter \"fromEnv\": Environment variable \"stringEnvVariable\" does not exist, and no default value set.")});
+            ("BCP427", DiagnosticLevel.Error,
+                "Environment variable \"stringEnvVariable\" does not exist and there's no default value set.")
+        });
     }
 
     [TestMethod]
@@ -124,7 +125,7 @@ param fromEnv=readEnvironmentVariable('stringEnvVariable')
 "),
 ("foo.bicep", @"param fromEnv string"));
 
-        result.Should().ContainDiagnostic("BCP338", DiagnosticLevel.Error, "Failed to evaluate parameter \"fromEnv\": Environment variable \"stringEnvVariable\" does not exist, and no default value set.");
+        result.Should().ContainDiagnostic("BCP427", DiagnosticLevel.Error, "Environment variable \"stringEnvVariable\" does not exist and there's no default value set.");
         result.Should().ContainDiagnostic("Bicepparam ReadEnvironmentVariable function", DiagnosticLevel.Info, "Available environment variables are: ");
     }
     [TestMethod]
@@ -314,23 +315,6 @@ param foo3 = foo2
     }
 
     [TestMethod]
-    public void No_parameters_containing_external_input_should_not_generate_external_input_definitions()
-    {
-        var result = CompilationHelper.CompileParams(
-("parameters.bicepparam", @"
-using none
-param foo = 'foo'
-var baz = externalInput('sys.cli', 'baz')
-"));
-
-        result.ExcludingLinterDiagnostics().Should().NotHaveAnyDiagnostics();
-        var parameters = TemplateHelper.ConvertAndAssertParameters(result.Parameters);
-        parameters["foo"].Value.Should().DeepEqual("foo");
-        parameters["foo"].Expression.Should().BeNull();
-        result.Parameters.Should().NotHaveValueAtPath("$.externalInputDefinitions");
-    }
-
-    [TestMethod]
     public void ExternalInput_parameter_with_param_references()
     {
         var result = CompilationHelper.CompileParams(
@@ -418,6 +402,37 @@ param foo = {
         externalInputs["my_param_provider_0"].Should().DeepEqual(new JObject
         {
             ["kind"] = "my.param.provider",
+        });
+    }
+
+    [TestMethod]
+    public void ExternalInput_alternative_functions_also_generate_external_inputs()
+    {
+        var services = new ServiceBuilder().WithFeatureOverrides(new(TestContext, DeployCommandsEnabled: true));
+        var result = CompilationHelper.CompileParams(
+            services,
+            ("parameters.bicepparam", """
+                using none
+                var foo = readCliArg('foo')
+                var foo2 = '${foo}-${readEnvVar('foo2')}'
+                param foo3 = foo2
+                """));
+
+        result.Should().NotHaveAnyDiagnostics();
+        var parameters = TemplateHelper.ConvertAndAssertParameters(result.Parameters);
+        parameters["foo3"].Value.Should().BeNull();
+        parameters["foo3"].Expression.Should().DeepEqual("""[format('{0}-{1}', externalInputs('sys_cliArg_0'), externalInputs('sys_envVar_1'))]""");
+
+        var externalInputs = TemplateHelper.ConvertAndAssertExternalInputs(result.Parameters);
+        externalInputs["sys_cliArg_0"].Should().DeepEqual(new JObject
+        {
+            ["kind"] = "sys.cliArg",
+            ["config"] = "foo",
+        });
+        externalInputs["sys_envVar_1"].Should().DeepEqual(new JObject
+        {
+            ["kind"] = "sys.envVar",
+            ["config"] = "foo2",
         });
     }
 }
