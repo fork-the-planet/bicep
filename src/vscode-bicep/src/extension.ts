@@ -56,7 +56,6 @@ import { createLogger, getLogger, resetLogger } from "./utils/logger";
 import { OutputChannelManager } from "./utils/OutputChannelManager";
 import { activateWithTelemetryAndErrorHandling } from "./utils/telemetry";
 import { BicepVisualizerViewManager } from "./visualizer";
-import { VisualDesignerViewManager } from "./visualizer-v2";
 
 let languageClient: lsp.LanguageClient | null = null;
 
@@ -117,7 +116,6 @@ export async function activate(extensionContext: ExtensionContext): Promise<void
         surveys.showSurveys(extensionContext.globalState);
 
         const viewManager = extension.register(new BicepVisualizerViewManager(extension.extensionUri, languageClient));
-        const viewManagerV2 = extension.register(new VisualDesignerViewManager(extension.extensionUri, languageClient));
 
         const outputChannelManager = extension.register(
           new OutputChannelManager("Bicep Operations", bicepConfigurationPrefix),
@@ -158,9 +156,9 @@ export async function activate(extensionContext: ExtensionContext): Promise<void
             pasteAsBicepCommand,
             new ShowDeployPaneCommand(deployPaneViewManager),
             new ShowDeployPaneToSideCommand(deployPaneViewManager),
-            new ShowVisualizerCommand(viewManager, viewManagerV2),
-            new ShowVisualizerToSideCommand(viewManager, viewManagerV2),
-            new ShowSourceFromVisualizerCommand(viewManager, viewManagerV2),
+            new ShowVisualizerCommand(viewManager),
+            new ShowVisualizerToSideCommand(viewManager),
+            new ShowSourceFromVisualizerCommand(viewManager),
             new WalkthroughCopyToClipboardCommand(),
             new WalkthroughCreateBicepFileCommand(),
             new WalkthroughOpenBicepFileCommand(),
