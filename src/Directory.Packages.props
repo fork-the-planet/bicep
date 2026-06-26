@@ -50,7 +50,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeStyle" Version="4.11.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.8" />
@@ -92,11 +92,11 @@
     <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.TextWriter" Version="3.0.0" />
-    <PackageVersion Include="SharpYaml" Version="3.10.0" />
+    <PackageVersion Include="SharpYaml" Version="3.11.0" />
     <PackageVersion Include="Spectre.Console" Version="0.57.0" />
     <PackageVersion Include="Spectre.Console.Testing" Version="0.57.0" />
     <PackageVersion Include="StreamJsonRpc" Version="2.20.20" />
-    <PackageVersion Include="System.CommandLine" Version="2.0.8" />
+    <PackageVersion Include="System.CommandLine" Version="2.0.9" />
     <PackageVersion Include="System.Collections.Immutable" Version="10.0.9" />
     <PackageVersion Include="TestableIO.System.IO.Abstractions.Wrappers" Version="22.1.1" />
     <PackageVersion Include="TestableIO.System.IO.Abstractions.TestingHelpers" Version="22.0.15" />
